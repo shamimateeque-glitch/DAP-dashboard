@@ -279,7 +279,7 @@ const CaseDetail = () => {
 
                                     {getRel(caseData.final_reports)?.status === 'DONE' && !getRel(caseData.invoices) && (
                                         <Button onClick={() => setInvoiceModalOpen(true)}>
-                                            Issued Invoice?
+                                            Invoice Issued?
                                         </Button>
                                     )}
 
@@ -1200,6 +1200,26 @@ const CaseDetail = () => {
                                                         : 'Not started'}
                                                 {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Submitted)</span>}
                                                 {report && !isDone && report.due_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Due)</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* 5b. Invoice Issue Date */}
+                            {(() => {
+                                const inv = getRel(caseData.invoices);
+                                const colorClass = inv?.issue_date ? "text-green-500" : "text-red-500";
+                                return (
+                                    <div className="flex items-center gap-3">
+                                        <DollarSign className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                        <div>
+                                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Issue Date</p>
+                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                                {inv?.issue_date
+                                                    ? format(toLocalDate(inv.issue_date), 'MMM dd, yyyy')
+                                                    : 'Not issued'}
+                                                {inv?.issue_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Issued)</span>}
                                             </p>
                                         </div>
                                     </div>
