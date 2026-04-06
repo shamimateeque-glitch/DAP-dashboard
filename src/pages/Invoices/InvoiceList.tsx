@@ -421,7 +421,12 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                             sortedInvoices.map((inv: any) => (
                                 <TableRow key={inv.id} className="hover:bg-muted/30 transition-colors">
                                     <TableCell className="font-bold text-primary">
-                                        {inv.invoice_number}
+                                        <span
+                                            className="cursor-pointer hover:underline"
+                                            onClick={() => navigate(`/cases/${inv.case_id}`)}
+                                        >
+                                            {inv.invoice_number}
+                                        </span>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
