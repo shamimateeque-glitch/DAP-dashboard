@@ -415,7 +415,9 @@ function generateExcel(rows: Record<string, any>[], columnDefs: ColumnDef[]): Ui
 
 // ─── Build email HTML ──────────────────────────────────────────────────────
 
-function buildEmailHtml(reportTitle: string, dateStr: string): string {
+function buildEmailHtml(reportTitle: string, dateStr: string, reportType: ReportType): string {
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://caseview.dap-ip.com';
+    const reportPath = `${siteUrl}/pending-work/${reportType}`;
     return `
     <!DOCTYPE html>
     <html>
@@ -446,7 +448,7 @@ function buildEmailHtml(reportTitle: string, dateStr: string): string {
                         </tr>
                     </table>
                     <div style="text-align:center;margin:24px 0 8px;">
-                        <a href="${Deno.env.get('SITE_URL') || 'https://your-dashboard-url.com'}/pending-work"
+                        <a href="${reportPath}"
                            style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;">
                             View on Dashboard
                         </a>
@@ -601,11 +603,11 @@ serve(async (req) => {
                         })
 
                         await client.send({
-                            from: `DAP Dashboard <${FROM_EMAIL}>`,
-                            to: emails.join(', '),
+                            from: `DAP Weekly Report <${FROM_EMAIL}>`,
+                            to: emails,
                             replyTo: REPLY_TO,
                             subject: `Weekly Pending Report – ${config.title}`,
-                            html: buildEmailHtml(config.title, dateStr),
+                            html: buildEmailHtml(config.title, dateStr, reportType),
                             attachments: [
                                 {
                                     filename: fileName,

@@ -41,7 +41,8 @@ const Login = () => {
             }
 
             toast.success('Logged in successfully');
-            navigate('/');
+            const from = (location.state as any)?.from?.pathname || '/';
+            navigate(from);
         } catch (error: any) {
             toast.error(sanitizeErrorMessage(error, 'Error logging in'));
         } finally {
