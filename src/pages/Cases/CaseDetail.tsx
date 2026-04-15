@@ -30,7 +30,8 @@ import {
     Edit2,
     Zap,
     FileText,
-    DollarSign
+    DollarSign,
+    RotateCcw
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -125,6 +126,8 @@ const CaseDetail = () => {
     const [invoiceStatusModalOpen, setInvoiceStatusModalOpen] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+    const [isReopenDialogOpen, setIsReopenDialogOpen] = React.useState(false);
+    const [isReopening, setIsReopening] = React.useState(false);
 
     const {
         saveCaseField,
@@ -180,6 +183,34 @@ const CaseDetail = () => {
         } finally {
             setIsDeleting(false);
             setIsDeleteDialogOpen(false);
+        }
+    };
+
+    // Reopen a REJECTED case: flip it back to the Decision Waiting stage so
+    // the team can re-record the client's decision. Only available on rejected
+    // cases (closed cases have downstream records that shouldn't be touched).
+    const handleReopen = async () => {
+        setIsReopening(true);
+        try {
+            const { error: uploadErr } = await supabase
+                .from('case_uploads')
+                .update({ decision_status: 'WAITING', decision_date: null })
+                .eq('case_id', id);
+            if (uploadErr) throw uploadErr;
+
+            const { error: caseErr } = await supabase
+                .from('cases')
+                .update({ case_status: 'UPLOADED' })
+                .eq('id', id);
+            if (caseErr) throw caseErr;
+
+            toast.success('Case reopened — back to Decision Waiting');
+            refetch();
+        } catch (error: any) {
+            toast.error(sanitizeErrorMessage(error, 'Error reopening case'));
+        } finally {
+            setIsReopening(false);
+            setIsReopenDialogOpen(false);
         }
     };
 
@@ -264,6 +295,12 @@ const CaseDetail = () => {
                             {caseData.case_status === 'UPLOADED' && (
                                 <Button onClick={() => setDecisionModalOpen(true)}>
                                     Record Decision
+                                </Button>
+                            )}
+                            {caseData.case_status === 'REJECTED' && (
+                                <Button variant="outline" onClick={() => setIsReopenDialogOpen(true)}>
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Reopen Case
                                 </Button>
                             )}
 
@@ -1531,6 +1568,28 @@ const CaseDetail = () => {
                     )}
                 </>
             )}
+            <AlertDialog open={isReopenDialogOpen} onOpenChange={setIsReopenDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Reopen this rejected case?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            The case will go back to the Decision Waiting stage so you can record a new client decision. The upload (client and fee) is kept; only the decision is cleared.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isReopening}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleReopen();
+                            }}
+                            disabled={isReopening}
+                        >
+                            {isReopening ? 'Reopening...' : 'Reopen Case'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
