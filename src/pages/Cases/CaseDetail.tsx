@@ -208,7 +208,20 @@ const CaseDetail = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/all-cases')}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                            // Prefer history back so users return to the list they came from
+                            // (e.g. All Invoices with filters applied). Fall back to all cases
+                            // if there's no history (deep link / direct URL entry).
+                            if (window.history.length > 1) {
+                                navigate(-1);
+                            } else {
+                                navigate('/all-cases');
+                            }
+                        }}
+                    >
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>

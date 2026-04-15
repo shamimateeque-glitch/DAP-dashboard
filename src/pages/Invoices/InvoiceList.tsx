@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { escapeLikePattern } from '@/lib/security';
@@ -52,15 +52,44 @@ interface InvoiceListProps {
 
 const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [page, setPage] = useState(1);
-    const [showAll, setShowAll] = useState(false);
+
+    // Filters + search are persisted to URL search params so they survive
+    // navigation (e.g. open an invoice → browser back restores the filtered list).
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const updateParam = (key: string, value: string, defaultValue = 'all') => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            if (!value || value === defaultValue) next.delete(key);
+            else next.set(key, value);
+            return next;
+        }, { replace: true });
+    };
+
+    const searchTerm = searchParams.get('q') || '';
+    const setSearchTerm = (v: string) => updateParam('q', v, '');
+
+    const page = parseInt(searchParams.get('page') || '1', 10) || 1;
+    const setPage = (updater: number | ((p: number) => number)) => {
+        const nextPage = typeof updater === 'function' ? updater(page) : updater;
+        updateParam('page', String(nextPage), '1');
+    };
+
+    const showAll = searchParams.get('all') === '1';
+    const setShowAll = (v: boolean) => updateParam('all', v ? '1' : '', '');
+
     const pageSize = 10;
 
-    // Filters
-    const [clientFilter, setClientFilter] = useState('all');
-    const [provinceFilter, setProvinceFilter] = useState('all');
-    const [statusInternal, setStatusInternal] = useState<string>(statusFilter === 'OVERDUE' ? 'all' : (statusFilter || 'all'));
+    const clientFilter = searchParams.get('client') || 'all';
+    const setClientFilter = (v: string) => updateParam('client', v);
+
+    const provinceFilter = searchParams.get('province') || 'all';
+    const setProvinceFilter = (v: string) => updateParam('province', v);
+
+    const statusInternalDefault = statusFilter === 'OVERDUE' ? 'all' : (statusFilter || 'all');
+    const statusInternal = searchParams.get('status') || statusInternalDefault;
+    const setStatusInternal = (v: string) => updateParam('status', v, statusInternalDefault);
+
     const [showFilters, setShowFilters] = useState(false);
 
     // Modal State
@@ -90,22 +119,30 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const { data: invoices, isLoading, refetch } = useQuery({
         queryKey: ['invoices', searchTerm, page, showAll, clientFilter, provinceFilter, statusInternal, statusFilter],
         queryFn: async () => {
+            // Use !inner on joined tables so filters actually exclude parent invoice rows
+            // (without !inner, Supabase only hides the embed and still returns the invoice).
+            const needsUploadInner = clientFilter !== 'all';
+            const uploadSelect = needsUploadInner ? 'case_uploads!inner(*)' : 'case_uploads(*)';
+
             let query = supabase
                 .from('invoices')
                 .select(`
                     *,
-                    cases(
-                        case_id, 
-                        target_name, 
-                        brand_name, 
+                    cases!inner(
+                        case_id,
+                        target_name,
+                        brand_name,
                         province,
-                        case_uploads(*)
+                        ${uploadSelect}
                     )
                 `, { count: 'exact' });
 
             if (searchTerm) {
+                // Use .ilike() directly rather than .or() — PostgREST's `.or()`
+                // parses its argument as "column.op.value", so values that
+                // contain "." or "/" (like invoice numbers) get mangled.
                 const escaped = escapeLikePattern(searchTerm);
-                query = query.or(`invoice_number.ilike.%${escaped}%`);
+                query = query.ilike('invoice_number', `%${escaped}%`);
             }
 
             // Apply Status Filter
@@ -125,10 +162,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                 query = query.eq('cases.province', provinceFilter);
             }
 
-            // For client filter, we need to check case_uploads
-            // Supabase inner join filtering:
             if (clientFilter !== 'all') {
-                // This assumes case_uploads is a flat join or exists
                 query = query.eq('cases.case_uploads.client', clientFilter);
             }
 
@@ -420,7 +454,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                         ) : sortedInvoices && sortedInvoices.length > 0 ? (
                             sortedInvoices.map((inv: any) => (
                                 <TableRow key={inv.id} className="hover:bg-muted/30 transition-colors">
-                                    <TableCell className="font-bold text-primary">
+                                    <TableCell className="font-bold text-primary whitespace-nowrap">
                                         <span
                                             className="cursor-pointer hover:underline"
                                             onClick={() => navigate(`/cases/${inv.case_id}`)}
