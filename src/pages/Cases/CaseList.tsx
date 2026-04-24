@@ -633,7 +633,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                             <TableHead>Client</TableHead>
                             <TableHead>Case Type</TableHead>
                             <TableHead>Case Status</TableHead>
-                            <TableHead>Decision Status</TableHead>
+                            {status !== 'CLOSED' && <TableHead>Decision Status</TableHead>}
                             <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                                 Submitted On {getSortIcon('date')}
                             </TableHead>
@@ -650,7 +650,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                    {status !== 'CLOSED' && <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>}
                                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
                                 </TableRow>
@@ -678,17 +678,19 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                                     <TableCell>
                                         <StatusBadge status={c.case_status} />
                                     </TableCell>
-                                    <TableCell>
-                                        {(() => {
-                                            const upload = Array.isArray(c.case_uploads)
-                                                ? c.case_uploads[0]
-                                                : c.case_uploads;
-                                            const ds = (upload as any)?.decision_status;
-                                            if (ds && ds !== 'WAITING') return <StatusBadge status={ds} />;
-                                            if (upload) return <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-medium">Waiting</span>;
-                                            return <span className="text-muted-foreground">-</span>;
-                                        })()}
-                                    </TableCell>
+                                    {status !== 'CLOSED' && (
+                                        <TableCell>
+                                            {(() => {
+                                                const upload = Array.isArray(c.case_uploads)
+                                                    ? c.case_uploads[0]
+                                                    : c.case_uploads;
+                                                const ds = (upload as any)?.decision_status;
+                                                if (ds && ds !== 'WAITING') return <StatusBadge status={ds} />;
+                                                if (upload) return <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-medium">Waiting</span>;
+                                                return <span className="text-muted-foreground">-</span>;
+                                            })()}
+                                        </TableCell>
+                                    )}
                                     <TableCell>{format(toLocalDate(c.case_reported_date), 'MMM dd, yyyy')}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -779,7 +781,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
+                                <TableCell colSpan={status === 'CLOSED' ? 8 : 9} className="h-24 text-center">
                                     No cases found.
                                 </TableCell>
                             </TableRow>

@@ -106,14 +106,13 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 .from('cases')
                 .select(selectStr, { count: 'exact' });
 
-            // Filtering based on stage - use cumulative logic
+            // Strict filtering: each page shows only cases currently at that status
             if (stage === 'in_depth') {
-                query = query.in('case_status', ['APPROVED', 'IN_DEPTH', 'ENFORCEMENT', 'DESTRUCTION', 'CLOSED']);
+                query = query.eq('case_status', 'IN_DEPTH');
             } else if (stage === 'enforcement') {
-                query = query.in('case_status', ['ENFORCEMENT', 'DESTRUCTION', 'CLOSED']);
+                query = query.eq('case_status', 'ENFORCEMENT');
             } else if (stage === 'destruction') {
-                // Only show cases that have a destruction_stages record (enforced by inner join above)
-                query = query.in('case_status', ['ENFORCEMENT', 'DESTRUCTION', 'CLOSED']);
+                query = query.eq('case_status', 'DESTRUCTION');
             }
 
             if (searchTerm) {
@@ -173,15 +172,39 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
         return 'Due Date';
     };
 
+    const parseDate = (d?: string | null): Date | null => {
+        if (!d) return null;
+        // Bare YYYY-MM-DD: anchor at local midnight. Full ISO/timestamp: parse as-is.
+        const s = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T00:00:00' : d;
+        const parsed = new Date(s);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
     const getStageDate = (stageData: any) => {
         if (!stageData) return '-';
-        const date = stageData.due_date;
-        return date ? format(new Date(date + "T00:00:00"), 'MMM dd, yyyy') : '-';
+        const date = stageData.status === 'DONE'
+            ? (stageData.status_date || stageData.due_date)
+            : stageData.due_date;
+        const parsed = parseDate(date);
+        return parsed ? format(parsed, 'MMM dd, yyyy') : '-';
     };
 
     const getStageDateRaw = (c: any) => {
         const stageData = getStageStatus(c);
-        return stageData?.due_date || '';
+        if (!stageData) return '';
+        return stageData.status === 'DONE'
+            ? (stageData.status_date || stageData.due_date || '')
+            : (stageData.due_date || '');
+    };
+
+    const getUpload = (c: any) => {
+        if (!c.case_uploads) return null;
+        return Array.isArray(c.case_uploads) ? c.case_uploads[0] : c.case_uploads;
+    };
+
+    const formatDate = (d?: string | null) => {
+        const parsed = parseDate(d);
+        return parsed ? format(parsed, 'MMM dd, yyyy') : '-';
     };
 
     const sortedData = React.useMemo(() => {
@@ -246,6 +269,8 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                             <TableHead>Target Name</TableHead>
                             <TableHead>Brand</TableHead>
                             <TableHead>Client</TableHead>
+                            <TableHead>Upload Date</TableHead>
+                            <TableHead>Approved Date</TableHead>
                             <TableHead>Case Status</TableHead>
                             <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                                 {getDateLabel()} {getSortIcon('date')}
@@ -257,7 +282,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     Loading workflow cases...
                                 </TableCell>
                             </TableRow>
@@ -280,6 +305,20 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                                                     ? displayClientName(c.case_uploads[0]?.client)
                                                     : displayClientName((c.case_uploads as any).client)
                                             ) : '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                {formatDate(getUpload(c)?.upload_date)}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                {getUpload(c)?.decision_status === 'APPROVED'
+                                                    ? formatDate(getUpload(c)?.decision_date)
+                                                    : '-'}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <StatusBadge status={c.case_status} />
@@ -357,7 +396,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                             })
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={8} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     No cases found in this stage.
                                 </TableCell>
                             </TableRow>

@@ -10,6 +10,7 @@ import {
   Bell,
   Shield,
   ClipboardList,
+  FilePlus,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -25,17 +26,18 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", defaultHref: "/" },
+  { icon: FilePlus, label: "Open New Case", defaultHref: "/new-case" },
   { icon: ClipboardList, label: "Pending Work", defaultHref: "/pending-work" },
   {
     icon: FolderOpen,
     label: "Cases",
-    children: ["All Cases", "New Case", "In-Hand", "Uploaded", "Awaiting Decision", "Approved", "Rejected", "Closed"],
+    children: ["All Cases", "In-Hand", "Uploaded", "Awaiting Decision", "Approved", "Rejected"],
     defaultHref: "/all-cases",
   },
   {
     icon: Settings2,
     label: "Workflow",
-    children: ["In-Depth", "Enforcement", "Destruction"],
+    children: ["In-Depth", "Enforcement", "Destruction", "Closed"],
     defaultHref: "/in-depth",
   },
   {
@@ -110,6 +112,7 @@ const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
   const filteredItems = navItems.filter(item => {
     const label = item.label.toLowerCase();
     if (label === "dashboard") return true;
+    if (label === "open new case") return can('cases', 'create');
     if (label === "alerts & reminders") return can('alerts', 'view');
     if (label === "cases") return can('cases', 'view');
     if (label === "workflow") return can('workflow', 'view');
