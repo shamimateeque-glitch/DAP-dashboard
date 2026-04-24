@@ -26,8 +26,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", defaultHref: "/" },
-  { icon: FilePlus, label: "Open New Case", defaultHref: "/new-case" },
   { icon: ClipboardList, label: "Pending Work", defaultHref: "/pending-work" },
+  { icon: FilePlus, label: "Open New Case", defaultHref: "/new-case" },
   {
     icon: FolderOpen,
     label: "Cases",
