@@ -51,6 +51,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UpdateWorkflowModal from '@/components/forms/UpdateWorkflowModal';
 import { displayClientName } from '@/lib/clientUtils';
 
@@ -78,6 +79,16 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
     const [sortColumn, setSortColumn] = useState<'matter_code' | 'date' | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+    // Workflow status tab: in-progress vs done for this stage
+    const [activeTab, setActiveTab] = useState<'in_progress' | 'done'>('in_progress');
+    const stageTable = stage === 'in_depth'
+        ? 'in_depth_stages'
+        : stage === 'enforcement'
+            ? 'enforcement_stages'
+            : 'destruction_stages';
+    const stageStatusValue = activeTab === 'in_progress' ? 'IN_PROGRESS' : 'DONE';
+    const hideCaseStatusColumn = activeTab === 'done';
+
     const handleSort = (column: 'matter_code' | 'date') => {
         if (sortColumn === column) {
             setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -95,25 +106,19 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
     };
 
     const { data: cases, isLoading, refetch } = useQuery({
-        queryKey: ['workflow-cases', stage, searchTerm, page, showAll],
+        queryKey: ['workflow-cases', stage, searchTerm, page, showAll, activeTab],
         queryFn: async () => {
-            // For destruction stage, use inner join so only cases WITH destruction records appear
-            const selectStr = stage === 'destruction'
-                ? '*, case_uploads(*), in_depth_stages(*), enforcement_stages(*), destruction_stages!inner(*)'
-                : '*, case_uploads(*), in_depth_stages(*), enforcement_stages(*), destruction_stages(*)';
+            // Inner-join on the active stage table so only cases that have a record
+            // for this stage (and match the in-progress/done filter) are returned.
+            const joins = ['case_uploads(*)', 'in_depth_stages(*)', 'enforcement_stages(*)', 'destruction_stages(*)']
+                .map(j => j.startsWith(stageTable) ? j.replace('(*)', '!inner(*)') : j)
+                .join(', ');
+            const selectStr = `*, ${joins}`;
 
             let query = supabase
                 .from('cases')
-                .select(selectStr, { count: 'exact' });
-
-            // Strict filtering: each page shows only cases currently at that status
-            if (stage === 'in_depth') {
-                query = query.eq('case_status', 'IN_DEPTH');
-            } else if (stage === 'enforcement') {
-                query = query.eq('case_status', 'ENFORCEMENT');
-            } else if (stage === 'destruction') {
-                query = query.eq('case_status', 'DESTRUCTION');
-            }
+                .select(selectStr, { count: 'exact' })
+                .eq(`${stageTable}.status`, stageStatusValue);
 
             if (searchTerm) {
                 const escaped = escapeLikePattern(searchTerm);
@@ -169,7 +174,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
     };
 
     const getDateLabel = () => {
-        return 'Due Date';
+        return activeTab === 'done' ? 'Done Date' : 'Due Date';
     };
 
     const parseDate = (d?: string | null): Date | null => {
@@ -236,6 +241,16 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 </div>
             </div>
 
+            <Tabs
+                value={activeTab}
+                onValueChange={(v) => { setActiveTab(v as 'in_progress' | 'done'); setPage(1); }}
+            >
+                <TabsList>
+                    <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+                    <TabsTrigger value="done">Done</TabsTrigger>
+                </TabsList>
+            </Tabs>
+
             <div className="flex flex-wrap gap-2">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -271,7 +286,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                             <TableHead>Client</TableHead>
                             <TableHead>Upload Date</TableHead>
                             <TableHead>Approved Date</TableHead>
-                            <TableHead>Case Status</TableHead>
+                            {!hideCaseStatusColumn && <TableHead>Case Status</TableHead>}
                             <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                                 {getDateLabel()} {getSortIcon('date')}
                             </TableHead>
@@ -282,7 +297,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={hideCaseStatusColumn ? 9 : 10} className="h-24 text-center">
                                     Loading workflow cases...
                                 </TableCell>
                             </TableRow>
@@ -320,9 +335,11 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                                                     : '-'}
                                             </div>
                                         </TableCell>
-                                        <TableCell>
-                                            <StatusBadge status={c.case_status} />
-                                        </TableCell>
+                                        {!hideCaseStatusColumn && (
+                                            <TableCell>
+                                                <StatusBadge status={c.case_status} />
+                                            </TableCell>
+                                        )}
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -396,7 +413,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                             })
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={hideCaseStatusColumn ? 9 : 10} className="h-24 text-center">
                                     No cases found in this stage.
                                 </TableCell>
                             </TableRow>
