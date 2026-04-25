@@ -34,10 +34,7 @@ Submitted independently — doesn't affect case status. Records the actual submi
 ________________________________________
 Phase 7: Invoice
 Created manually after final report submission.
-•	Due date calculated from final report submission date + client payment terms: 
-o	OneWorld: 90 days
-o	A.A Associates: 95 days
-o	SafeMark: 45 days
+•	Due date = invoice issue date + 90 days (uniform across all clients: OneWorld, A.A Associates, SafeMark)
 •	Invoice statuses: ISSUED → PAID (or remains unpaid/overdue)
 •	System auto-detects overdue invoices for reporting
 ________________________________________
