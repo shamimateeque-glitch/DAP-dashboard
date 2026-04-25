@@ -62,7 +62,6 @@ const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({
     onSuccess,
     defaultAmount,
     clientName,
-    finalReportDate,
     brandName,
     caseType,
 }) => {
@@ -72,27 +71,38 @@ const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({
     const [isGenerating, setIsGenerating] = React.useState(false);
     const [duplicateValue, setDuplicateValue] = React.useState<string | null>(null);
 
-    const getBaseDate = () => finalReportDate ? new Date(finalReportDate + 'T00:00:00') : new Date();
+    const todayStr = new Date().toISOString().split('T')[0];
 
     const form = useForm<InvoiceFormValues>({
         resolver: zodResolver(invoiceSchema),
         defaultValues: {
             invoice_number: '',
-            issue_date: new Date().toISOString().split('T')[0],
-            due_date: format(addDays(getBaseDate(), getPaymentTermDays(clientName)), 'yyyy-MM-dd'),
+            issue_date: todayStr,
+            due_date: format(addDays(new Date(todayStr + 'T00:00:00'), getPaymentTermDays(clientName)), 'yyyy-MM-dd'),
             amount_usd: defaultAmount?.toString() || '',
         },
     });
+
+    // Keep due_date in sync with issue_date: due_date = issue_date + payment term days
+    const watchedIssueDate = form.watch('issue_date');
+    React.useEffect(() => {
+        if (!watchedIssueDate) return;
+        const days = getPaymentTermDays(clientName);
+        const newDueDate = format(addDays(new Date(watchedIssueDate + 'T00:00:00'), days), 'yyyy-MM-dd');
+        if (form.getValues('due_date') !== newDueDate) {
+            form.setValue('due_date', newDueDate, { shouldDirty: false });
+        }
+    }, [watchedIssueDate, clientName, form]);
 
     // Reset form and auto-generate invoice number when modal opens
     React.useEffect(() => {
         if (isOpen) {
             const days = getPaymentTermDays(clientName);
-            const baseDate = finalReportDate ? new Date(finalReportDate + 'T00:00:00') : new Date();
+            const today = new Date().toISOString().split('T')[0];
             form.reset({
                 invoice_number: '',
-                issue_date: new Date().toISOString().split('T')[0],
-                due_date: format(addDays(baseDate, days), 'yyyy-MM-dd'),
+                issue_date: today,
+                due_date: format(addDays(new Date(today + 'T00:00:00'), days), 'yyyy-MM-dd'),
                 amount_usd: defaultAmount !== undefined && defaultAmount !== null ? defaultAmount.toString() : '',
             });
             setIsEditingInvoiceNumber(false);
@@ -116,7 +126,7 @@ const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({
                 return () => { cancelled = true; };
             }
         }
-    }, [isOpen, defaultAmount, clientName, finalReportDate, brandName, caseType, form]);
+    }, [isOpen, defaultAmount, clientName, brandName, caseType, form]);
 
     const onSubmit = async (values: InvoiceFormValues) => {
         setIsSubmitting(true);

@@ -1,7 +1,7 @@
 export const PAYMENT_TERMS: Record<string, number> = {
     'OneWorld': 90,
     'A.A Associates': 90,
-    'SafeMark': 45,
+    'SafeMark': 90,
 };
 
 export const normalizeClientName = (clientName?: string): string => {
@@ -18,7 +18,7 @@ export const normalizeClientName = (clientName?: string): string => {
 };
 
 export const getPaymentTermDays = (clientName?: string): number => {
-    if (!clientName) return 60; // Default if no client
+    if (!clientName) return 90; // Default if no client
 
     const normalized = normalizeClientName(clientName);
 
@@ -33,5 +33,5 @@ export const getPaymentTermDays = (clientName?: string): number => {
             key.toLowerCase() === normalized.toLowerCase()
     );
 
-    return match ? PAYMENT_TERMS[match] : 60;
+    return match ? PAYMENT_TERMS[match] : 90;
 };
