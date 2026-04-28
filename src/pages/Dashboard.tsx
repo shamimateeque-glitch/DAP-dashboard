@@ -63,6 +63,10 @@ interface DashboardData {
   overdueAmount: number;
   awaitingInvoicingCount: number;
   awaitingInvoicingAmount: number;
+  totalApprovedCount: number;
+  totalInvoicedCount: number;
+  totalPaidCount: number;
+  totalOutstandingCount: number;
 
   // Upcoming deadlines (next 7 days)
   upcomingInDepth: number;
@@ -318,6 +322,10 @@ async function fetchDashboardData(
     .reduce((sum, u) => sum + (Number(u.our_fee_usd) || 0), 0);
   const totalOutstanding = totalDestruction - totalPaid;
 
+  const totalApprovedCount = allUploads.filter((u) => u.decision_status === "APPROVED").length;
+  const totalInvoicedCount = allInvoices.length;
+  const totalPaidCount = allInvoices.filter((i) => i.status === "PAID").length;
+
   const overdueInvoices = allInvoices.filter((i) => i.status !== "PAID" && i.due_date && i.due_date < todayStr);
   const overdueCount = overdueInvoices.length;
   const overdueInvoiceCaseIds = new Set(overdueInvoices.map((i) => i.case_id));
@@ -337,6 +345,11 @@ async function fetchDashboardData(
   const awaitingInvoicingAmount = allUploads
     .filter((u) => awaitingInvoicingCaseIds.has(u.case_id))
     .reduce((sum, u) => sum + (Number(u.our_fee_usd) || 0), 0);
+
+  // Count for the Outstanding card lines up with the three bottom-row tiles
+  // (overdue + not-yet-due invoices + cases awaiting their first invoice).
+  const totalOutstandingCount =
+    allInvoices.filter((i) => i.status !== "PAID").length + awaitingInvoicingCount;
 
   // ── Financial Values per Status ──────────────────────────────────────────
   const BASE_VALUE = 1500;
@@ -491,6 +504,7 @@ async function fetchDashboardData(
     enforcementInProgress, enforcementDone, enforcementOverdue,
     destructionInProgress, destructionDone, destructionOverdue,
     totalFeeUploaded, totalFeeApproved, totalDestruction, totalPaid, totalOutstanding, overdueCount, overdueAmount, awaitingInvoicingCount, awaitingInvoicingAmount,
+    totalApprovedCount, totalInvoicedCount, totalPaidCount, totalOutstandingCount,
     upcomingInDepth, upcomingEnforcement, upcomingDestruction,
     clientBreakdown, byCity, statusDist, monthlyTrend, invoiceAging, attentionItems,
     valueInHand, valueUploaded, valueApproved, valueRejected, valueUploadedTotal, uploadedTotalCount, valueTotal, valueActive, valueClosed,
@@ -1073,18 +1087,22 @@ const Dashboard = () => {
           <div className="glass-card rounded-xl p-5">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Total Fee — Approved</p>
             <p className="text-2xl font-bold text-foreground">{usd(data.totalFeeApproved)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{data.totalApprovedCount} cases</p>
           </div>
           <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all" style={{ backgroundColor: "rgba(59,130,246,0.10)" }} onClick={() => navigate("/all-invoices")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Total Invoiced</p>
             <p className="text-2xl font-bold" style={{ color: "#3b82f6" }}>{usd(data.totalDestruction)}</p>
+            <p className="text-xs mt-1" style={{ color: "rgba(59,130,246,0.8)" }}>{data.totalInvoicedCount} invoices</p>
           </div>
           <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-green-500/50 transition-all" style={{ backgroundColor: "rgba(34,197,94,0.10)" }} onClick={() => navigate("/invoices-paid")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Total Paid</p>
             <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{usd(data.totalPaid)}</p>
+            <p className="text-xs mt-1" style={{ color: "rgba(34,197,94,0.8)" }}>{data.totalPaidCount} invoices</p>
           </div>
           <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-yellow-500/50 transition-all" style={{ backgroundColor: "rgba(245,158,11,0.10)" }} onClick={() => navigate("/invoices-unpaid")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Outstanding</p>
             <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{usd(data.totalOutstanding)}</p>
+            <p className="text-xs mt-1" style={{ color: "rgba(245,158,11,0.8)" }}>{data.totalOutstandingCount} invoices</p>
           </div>
         </div>
 
