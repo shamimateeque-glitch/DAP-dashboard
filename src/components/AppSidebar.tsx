@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
   {
     icon: DollarSign,
     label: "Invoices",
-    children: ["All Invoices", "Invoices Issued", "Invoices Paid", "Invoices Over Due"],
+    children: ["All Invoices", "Invoices Unpaid", "Invoices Paid", "Invoices Over Due"],
     defaultHref: "/all-invoices",
   },
   {

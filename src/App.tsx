@@ -86,6 +86,7 @@ const App = () => (
 
                     {/* Invoices */}
                     <Route path="/all-invoices" element={<InvoiceList />} />
+                    <Route path="/invoices-unpaid" element={<InvoiceList status="NOT_PAID" />} />
                     <Route path="/invoices-due" element={<InvoiceList status="NOT_PAID" />} />
                     <Route path="/invoices-issued" element={<InvoiceList status="NOT_PAID" />} />
                     <Route path="/invoices-paid" element={<InvoiceList status="PAID" />} />

@@ -1067,7 +1067,7 @@ const Dashboard = () => {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Total Paid</p>
             <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{usd(data.totalPaid)}</p>
           </div>
-          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-yellow-500/50 transition-all" style={{ backgroundColor: "rgba(245,158,11,0.10)" }} onClick={() => navigate("/invoices-issued")}>
+          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-yellow-500/50 transition-all" style={{ backgroundColor: "rgba(245,158,11,0.10)" }} onClick={() => navigate("/invoices-unpaid")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Outstanding</p>
             <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{usd(data.totalOutstanding)}</p>
           </div>
@@ -1080,7 +1080,7 @@ const Dashboard = () => {
             <p className="text-4xl font-bold" style={{ color: "#ef4444" }}>{data.overdueCount}</p>
             <p className="text-sm text-muted-foreground mt-2">{usd(data.overdueAmount)}</p>
           </div>
-          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all" style={{ backgroundColor: "rgba(59,130,246,0.10)" }} onClick={() => navigate("/invoices-issued")}>
+          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all" style={{ backgroundColor: "rgba(59,130,246,0.10)" }} onClick={() => navigate("/invoices-unpaid")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Not Yet Due</p>
             <p className="text-4xl font-bold" style={{ color: "#3b82f6" }}>{Math.max(0, data.destruction)}</p>
             <p className="text-sm text-muted-foreground mt-2">{usd(Math.max(0, data.totalOutstanding - data.overdueAmount))}</p>
@@ -1200,7 +1200,7 @@ const Dashboard = () => {
                 const totalAging = data.invoiceAging.reduce((s, r) => s + r.amount, 0);
                 const pct = totalAging > 0 ? Math.round((row.amount / totalAging) * 100) : 0;
                 const isOverdue = row.range !== "Current" && row.count > 0;
-                const targetRoute = row.range === "Current" ? "/invoices-issued" : "/invoices-over-due";
+                const targetRoute = row.range === "Current" ? "/invoices-unpaid" : "/invoices-over-due";
                 return (
                   <tr key={row.range} className="border-b border-border/50 last:border-0">
                     <td className="py-2.5 text-foreground">{row.range}</td>

@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
     Search,
-    Filter,
     ChevronLeft,
     ChevronRight,
     MoreHorizontal,
@@ -49,6 +48,14 @@ import { normalizeClientName } from '@/lib/paymentTerms';
 interface InvoiceListProps {
     status?: 'ISSUED' | 'PAID' | 'NOT_PAID' | 'OVERDUE' | 'all';
 }
+
+const BRAND_OPTIONS = [
+    "American Eagle", "BMW", "Biscoff Creamy", "Burberry", "Cavin Klein",
+    "Champion", "Gucci", "Guess", "Harley davidson", "Hugo Boss",
+    "Levis", "Mars", "New Balance", "Nike", "Nutella",
+    "Porsche", "Puma", "Reebok", "Tommy Hilfiger", "Toyota",
+    "US polo", "WD-40"
+];
 
 const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const navigate = useNavigate();
@@ -86,11 +93,21 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const provinceFilter = searchParams.get('province') || 'all';
     const setProvinceFilter = (v: string) => updateParam('province', v);
 
+    const brandFilter = searchParams.get('brand') || 'all';
+    const setBrandFilter = (v: string) => updateParam('brand', v);
+
+    const caseTypeFilter = searchParams.get('type') || 'all';
+    const setCaseTypeFilter = (v: string) => updateParam('type', v);
+
+    const startDate = searchParams.get('start') || '';
+    const setStartDate = (v: string) => updateParam('start', v, '');
+
+    const endDate = searchParams.get('end') || '';
+    const setEndDate = (v: string) => updateParam('end', v, '');
+
     const statusInternalDefault = statusFilter === 'OVERDUE' ? 'all' : (statusFilter || 'all');
     const statusInternal = searchParams.get('status') || statusInternalDefault;
     const setStatusInternal = (v: string) => updateParam('status', v, statusInternalDefault);
-
-    const [showFilters, setShowFilters] = useState(false);
 
     // Modal State
     const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
@@ -117,7 +134,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     };
 
     const { data: invoices, isLoading, refetch } = useQuery({
-        queryKey: ['invoices', searchTerm, page, showAll, clientFilter, provinceFilter, statusInternal, statusFilter],
+        queryKey: ['invoices', searchTerm, page, showAll, clientFilter, provinceFilter, brandFilter, caseTypeFilter, startDate, endDate, statusInternal, statusFilter],
         queryFn: async () => {
             // Use !inner on joined tables so filters actually exclude parent invoice rows
             // (without !inner, Supabase only hides the embed and still returns the invoice).
@@ -164,6 +181,22 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
 
             if (clientFilter !== 'all') {
                 query = query.eq('cases.case_uploads.client', clientFilter);
+            }
+
+            if (brandFilter !== 'all') {
+                query = query.eq('cases.brand_name', brandFilter);
+            }
+
+            if (caseTypeFilter !== 'all') {
+                query = query.eq('cases.case_type', caseTypeFilter);
+            }
+
+            if (startDate) {
+                query = query.gte('issue_date', startDate);
+            }
+
+            if (endDate) {
+                query = query.lte('issue_date', endDate);
             }
 
             query = query.order('due_date', { ascending: true });
@@ -235,6 +268,10 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const resetFilters = () => {
         setClientFilter('all');
         setProvinceFilter('all');
+        setBrandFilter('all');
+        setCaseTypeFilter('all');
+        setStartDate('');
+        setEndDate('');
         setStatusInternal('all');
         setSearchTerm('');
     };
@@ -282,12 +319,6 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                         Manage billing, payments, and financial tracking.
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-                        <Filter className="mr-2 h-4 w-4" />
-                        {showFilters ? 'Hide Filters' : 'Filters'}
-                    </Button>
-                </div>
             </div>
 
             {/* Summary Stats */}
@@ -296,7 +327,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Issued Invoices (Due Soon)</p>
+                                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Unpaid Invoices (Due Soon)</p>
                                 <div className="flex items-baseline gap-2 mt-1">
                                     <h3 className="text-2xl font-bold font-mono">${stats?.outstanding?.toLocaleString() || '0'}</h3>
                                     <span className="text-xs font-semibold text-amber-500/80">
@@ -350,78 +381,78 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                 </Card>
             </div>
 
-            {showFilters && (
-                <Card className="bg-muted/30 border-dashed">
-                    <CardContent className="pt-6 pb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Client</label>
-                                <Select value={clientFilter} onValueChange={setClientFilter}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="All Clients" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Clients</SelectItem>
-                                        <SelectItem value="ONEWORLD">OneWorld</SelectItem>
-                                        <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
-                                        <SelectItem value="SAFEMARK">SafeMark</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Province</label>
-                                <Select value={provinceFilter} onValueChange={setProvinceFilter}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="All Provinces" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Provinces</SelectItem>
-                                        <SelectItem value="Punjab">Punjab</SelectItem>
-                                        <SelectItem value="Sindh">Sindh</SelectItem>
-                                        <SelectItem value="KPK">KPK</SelectItem>
-                                        <SelectItem value="Balochistan">Balochistan</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {!statusFilter && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
-                                    <Select value={statusInternal} onValueChange={setStatusInternal}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="All Statuses" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Statuses</SelectItem>
-                                            <SelectItem value="ISSUED">UNPAID (DUE SOON)</SelectItem>
-                                            <SelectItem value="PAID">PAID</SelectItem>
-                                            <SelectItem value="OVERDUE">OVERDUE</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                            <div className="flex items-end gap-2">
-                                <Button variant="secondary" className="flex-1" onClick={resetFilters}>
-                                    <RotateCcw className="mr-2 h-4 w-4" /> Reset
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            <div className="flex gap-2">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-wrap gap-2">
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by Invoice #..."
-                        className="pl-10 bg-card shadow-sm"
+                        className="pl-8"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+
+                <Select value={clientFilter} onValueChange={setClientFilter}>
+                    <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Clients</SelectItem>
+                        <SelectItem value="ONEWORLD">OneWorld</SelectItem>
+                        <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
+                        <SelectItem value="SAFEMARK">SafeMark</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <Select value={brandFilter} onValueChange={setBrandFilter}>
+                    <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Brands</SelectItem>
+                        {BRAND_OPTIONS.map(b => (
+                            <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={caseTypeFilter} onValueChange={setCaseTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Case Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="Customs">Customs</SelectItem>
+                        <SelectItem value="Market">Market</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-2">
+                    <Input
+                        type="date"
+                        className="w-[140px]"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                    />
+                    <span className="text-muted-foreground text-sm">to</span>
+                    <Input
+                        type="date"
+                        className="w-[140px]"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                    />
+                </div>
+
+                {(searchTerm || clientFilter !== 'all' || brandFilter !== 'all' || caseTypeFilter !== 'all' || startDate || endDate) && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetFilters}
+                        className="h-10 text-muted-foreground hover:text-foreground"
+                    >
+                        <RotateCcw className="h-4 w-4 mr-2" /> Clear
+                    </Button>
+                )}
             </div>
 
             <div className="rounded-xl border bg-card shadow-md overflow-hidden">
