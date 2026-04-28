@@ -27,7 +27,10 @@ import {
     RotateCcw,
     ArrowUpDown,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    FileOutput,
+    FileText,
+    FileDown
 } from 'lucide-react';
 import { format, isAfter, parseISO } from 'date-fns';
 import {
@@ -44,6 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import UpdateInvoiceStatusModal from '@/components/forms/UpdateInvoiceStatusModal';
 import { toast } from 'sonner';
 import { normalizeClientName } from '@/lib/paymentTerms';
+import { exportToCSV, exportToExcel, exportToPDF } from '@/lib/exportUtils';
 
 interface InvoiceListProps {
     status?: 'ISSUED' | 'PAID' | 'NOT_PAID' | 'OVERDUE' | 'all';
@@ -265,6 +269,104 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
         return sorted;
     }, [invoices?.data, sortColumn, sortDirection]);
 
+    const handleExportAll = async (fmt: 'csv' | 'excel' | 'pdf') => {
+        const loadingToast = toast.loading(`Preparing ${fmt.toUpperCase()} export…`);
+        try {
+            // Re-run the same filtered query as the table, but without pagination
+            // so the export covers every row matching the current filters.
+            const needsUploadInner = clientFilter !== 'all';
+            const uploadSelect = needsUploadInner ? 'case_uploads!inner(*)' : 'case_uploads(*)';
+
+            let query = supabase
+                .from('invoices')
+                .select(`
+                    *,
+                    cases!inner(
+                        case_id,
+                        target_name,
+                        brand_name,
+                        case_type,
+                        province,
+                        ${uploadSelect}
+                    )
+                `);
+
+            if (searchTerm) {
+                const escaped = escapeLikePattern(searchTerm);
+                query = query.ilike('invoice_number', `%${escaped}%`);
+            }
+
+            const activeStatus = (statusFilter && statusFilter !== 'all') ? statusFilter : statusInternal;
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (activeStatus === 'OVERDUE') {
+                query = query.neq('status', 'PAID').lt('due_date', todayStr);
+            } else if (activeStatus === 'ISSUED' || activeStatus === 'NOT_PAID') {
+                query = query.neq('status', 'PAID').gte('due_date', todayStr);
+            } else if (activeStatus !== 'all' && activeStatus) {
+                query = query.eq('status', activeStatus);
+            }
+
+            if (provinceFilter !== 'all') query = query.eq('cases.province', provinceFilter);
+            if (clientFilter !== 'all') query = query.eq('cases.case_uploads.client', clientFilter);
+            if (brandFilter !== 'all') query = query.eq('cases.brand_name', brandFilter);
+            if (caseTypeFilter !== 'all') query = query.eq('cases.case_type', caseTypeFilter);
+            if (startDate) query = query.gte('issue_date', startDate);
+            if (endDate) query = query.lte('issue_date', endDate);
+
+            const { data, error } = await query.order('due_date', { ascending: true });
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                toast.dismiss(loadingToast);
+                toast.error('No invoices to export');
+                return;
+            }
+
+            const fmtDate = (d?: string | null) => d ? format(parseISO(d), 'yyyy-MM-dd') : '';
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            const exportData = data.map((inv: any) => {
+                const c = Array.isArray(inv.cases) ? inv.cases[0] : inv.cases;
+                const upload = Array.isArray(c?.case_uploads) ? c.case_uploads[0] : c?.case_uploads;
+                const isOverdue = inv.status !== 'PAID' && inv.due_date && inv.due_date < todayDate;
+                const displayStatus = inv.status === 'PAID' ? 'PAID' : isOverdue ? 'OVERDUE' : 'UNPAID';
+
+                return {
+                    'Invoice Number': inv.invoice_number || '',
+                    'Case ID': c?.case_id || '',
+                    'Target Name': c?.target_name || '',
+                    'Brand': c?.brand_name || '',
+                    'Case Type': c?.case_type || '',
+                    'Client': normalizeClientName(upload?.client) || '',
+                    'Province': c?.province || '',
+                    'Issue Date': fmtDate(inv.issue_date),
+                    'Due Date': fmtDate(inv.due_date),
+                    'Amount (USD)': inv.amount_usd ?? '',
+                    'Status': displayStatus,
+                    'Status Date': fmtDate(inv.status_date),
+                };
+            });
+
+            const fileName = `Invoices-Export-${todayDate}`;
+            if (fmt === 'csv') {
+                await exportToCSV(exportData, fileName);
+            } else if (fmt === 'excel') {
+                await exportToExcel(exportData, fileName);
+            } else {
+                await exportToPDF(
+                    exportData,
+                    ['Invoice Number', 'Case ID', 'Target Name', 'Brand', 'Client', 'Issue Date', 'Due Date', 'Amount (USD)', 'Status'],
+                    fileName,
+                    'Invoices Export'
+                );
+            }
+            toast.dismiss(loadingToast);
+            toast.success(`Exported ${data.length} invoices to ${fmt.toUpperCase()}`);
+        } catch (err: any) {
+            toast.dismiss(loadingToast);
+            toast.error(err?.message || 'Export failed');
+        }
+    };
+
     const resetFilters = () => {
         setClientFilter('all');
         setProvinceFilter('all');
@@ -318,6 +420,26 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                     <p className="text-muted-foreground">
                         Manage billing, payments, and financial tracking.
                     </p>
+                </div>
+                <div className="flex w-full sm:w-auto gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="flex-1 sm:w-auto">
+                                <FileOutput className="mr-2 h-4 w-4" /> Export Data
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleExportAll('csv')}>
+                                <FileText className="mr-2 h-4 w-4" /> Export as CSV
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleExportAll('excel')}>
+                                <FileDown className="mr-2 h-4 w-4" /> Export as Excel
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleExportAll('pdf')}>
+                                <FileDown className="mr-2 h-4 w-4" /> Export as PDF
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
