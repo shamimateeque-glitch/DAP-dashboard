@@ -61,6 +61,8 @@ interface DashboardData {
   totalOutstanding: number;
   overdueCount: number;
   overdueAmount: number;
+  awaitingInvoicingCount: number;
+  awaitingInvoicingAmount: number;
 
   // Upcoming deadlines (next 7 days)
   upcomingInDepth: number;
@@ -323,6 +325,19 @@ async function fetchDashboardData(
     .filter((u) => overdueInvoiceCaseIds.has(u.case_id))
     .reduce((sum, u) => sum + (Number(u.our_fee_usd) || 0), 0);
 
+  // Cases that have reached destruction/closed but no invoice has been issued yet —
+  // they sit in totalOutstanding but aren't reflected in the aging buckets, so a
+  // standalone tile makes the gap visible instead of hiding it.
+  const invoicedCaseIds = new Set(allInvoices.map((i) => i.case_id));
+  const awaitingInvoicingCases = allCases.filter(
+    (c) => (c.case_status === "DESTRUCTION" || c.case_status === "CLOSED") && !invoicedCaseIds.has(c.id)
+  );
+  const awaitingInvoicingCount = awaitingInvoicingCases.length;
+  const awaitingInvoicingCaseIds = new Set(awaitingInvoicingCases.map((c) => c.id));
+  const awaitingInvoicingAmount = allUploads
+    .filter((u) => awaitingInvoicingCaseIds.has(u.case_id))
+    .reduce((sum, u) => sum + (Number(u.our_fee_usd) || 0), 0);
+
   // ── Financial Values per Status ──────────────────────────────────────────
   const BASE_VALUE = 1500;
 
@@ -475,7 +490,7 @@ async function fetchDashboardData(
     inDepthInProgress, inDepthDone, inDepthOverdue,
     enforcementInProgress, enforcementDone, enforcementOverdue,
     destructionInProgress, destructionDone, destructionOverdue,
-    totalFeeUploaded, totalFeeApproved, totalDestruction, totalPaid, totalOutstanding, overdueCount, overdueAmount,
+    totalFeeUploaded, totalFeeApproved, totalDestruction, totalPaid, totalOutstanding, overdueCount, overdueAmount, awaitingInvoicingCount, awaitingInvoicingAmount,
     upcomingInDepth, upcomingEnforcement, upcomingDestruction,
     clientBreakdown, byCity, statusDist, monthlyTrend, invoiceAging, attentionItems,
     valueInHand, valueUploaded, valueApproved, valueRejected, valueUploadedTotal, uploadedTotalCount, valueTotal, valueActive, valueClosed,
@@ -1073,17 +1088,27 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Row 2 — Overdue / Not Yet Due */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Row 2 — Overdue / Not Yet Due / Awaiting Invoicing */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-red-500/50 transition-all" style={{ backgroundColor: "rgba(239,68,68,0.10)" }} onClick={() => navigate("/invoices-over-due")}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Overdue Invoices</p>
             <p className="text-4xl font-bold" style={{ color: "#ef4444" }}>{data.overdueCount}</p>
             <p className="text-sm text-muted-foreground mt-2">{usd(data.overdueAmount)}</p>
           </div>
-          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all" style={{ backgroundColor: "rgba(59,130,246,0.10)" }} onClick={() => navigate("/invoices-unpaid")}>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Not Yet Due</p>
-            <p className="text-4xl font-bold" style={{ color: "#3b82f6" }}>{Math.max(0, data.destruction)}</p>
-            <p className="text-sm text-muted-foreground mt-2">{usd(Math.max(0, data.totalOutstanding - data.overdueAmount))}</p>
+          {(() => {
+            const current = data.invoiceAging.find(r => r.range === "Current");
+            return (
+              <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all" style={{ backgroundColor: "rgba(59,130,246,0.10)" }} onClick={() => navigate("/invoices-unpaid")}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Not Yet Due</p>
+                <p className="text-4xl font-bold" style={{ color: "#3b82f6" }}>{current?.count ?? 0}</p>
+                <p className="text-sm text-muted-foreground mt-2">{usd(current?.amount ?? 0)}</p>
+              </div>
+            );
+          })()}
+          <div className="glass-card rounded-xl p-5 cursor-pointer hover:ring-2 hover:ring-amber-500/50 transition-all" style={{ backgroundColor: "rgba(245,158,11,0.10)" }} onClick={() => navigate("/closed")} title="Cases that reached destruction or closed status without an invoice issued yet">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Awaiting Invoicing</p>
+            <p className="text-4xl font-bold" style={{ color: "#f59e0b" }}>{data.awaitingInvoicingCount}</p>
+            <p className="text-sm text-muted-foreground mt-2">{usd(data.awaitingInvoicingAmount)}</p>
           </div>
         </div>
 
