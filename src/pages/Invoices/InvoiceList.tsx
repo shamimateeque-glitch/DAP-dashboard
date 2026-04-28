@@ -258,7 +258,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
             );
         }
 
-        return <Badge variant="warning">{inv.status}</Badge>;
+        return <Badge variant="warning">UNPAID</Badge>;
     };
 
     return (
@@ -267,7 +267,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">
                         {statusFilter === 'PAID' ? 'Paid Invoices' :
-                            statusFilter === 'NOT_PAID' ? 'Issued Invoices (Due Soon)' :
+                            statusFilter === 'NOT_PAID' ? 'Unpaid Invoices (Due Soon)' :
                                 statusFilter === 'OVERDUE' ? 'Overdue Invoices' :
                                     <span className="flex items-center gap-2">
                                         All Invoices
@@ -392,7 +392,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">All Statuses</SelectItem>
-                                            <SelectItem value="ISSUED">ISSUED (DUE SOON)</SelectItem>
+                                            <SelectItem value="ISSUED">UNPAID (DUE SOON)</SelectItem>
                                             <SelectItem value="PAID">PAID</SelectItem>
                                             <SelectItem value="OVERDUE">OVERDUE</SelectItem>
                                         </SelectContent>

@@ -122,7 +122,7 @@ export default function ClientReportsPage() {
 
   const invoicedTotal = useMemo(() => cases.reduce((s, c) => s + (c.invoice_amount || 0), 0), [cases]);
   const invoicedPaid = useMemo(() => cases.filter(c => c.invoice_status === "PAID").reduce((s, c) => s + (c.invoice_amount || 0), 0), [cases]);
-  const invoicedOutstanding = useMemo(() => cases.filter(c => c.invoice_status === "NOT_PAID").reduce((s, c) => s + (c.invoice_amount || 0), 0), [cases]);
+  const invoicedOutstanding = useMemo(() => cases.filter(c => c.invoice_status && c.invoice_status !== "PAID").reduce((s, c) => s + (c.invoice_amount || 0), 0), [cases]);
   const invoiceList = useMemo(() => cases.filter(c => c.invoice_status), [cases]);
 
   const clientLabel = CLIENTS.find(c => c.value === selectedClient)?.label || "";
@@ -392,7 +392,7 @@ export default function ClientReportsPage() {
                               {row.final_report_date ? fmtDate(row.final_report_date) : <span className="text-muted-foreground">Pending</span>}
                             </TableCell>
                             <TableCell className="text-xs">
-                              {row.invoice_status ? <Badge variant="outline" className="text-xs">{row.invoice_status}</Badge> : "—"}
+                              {row.invoice_status ? <Badge variant="outline" className="text-xs">{row.invoice_status === "PAID" ? "PAID" : "UNPAID"}</Badge> : "—"}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -506,9 +506,9 @@ export default function ClientReportsPage() {
                             <TableCell className="text-right text-xs font-mono">{fmtUSD(row.invoice_amount)}</TableCell>
                             <TableCell className="text-xs">
                               <Badge variant="outline" className={`text-xs ${row.invoice_status === "PAID" ? "text-green-400 border-green-500/30" :
-                                row.invoice_status === "NOT_PAID" ? "text-red-400 border-red-500/30" : ""
+                                row.invoice_status ? "text-red-400 border-red-500/30" : ""
                                 }`}>
-                                {row.invoice_status || "—"}
+                                {row.invoice_status ? (row.invoice_status === "PAID" ? "PAID" : "UNPAID") : "—"}
                               </Badge>
                             </TableCell>
                           </TableRow>

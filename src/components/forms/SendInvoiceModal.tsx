@@ -144,7 +144,7 @@ const SendInvoiceModal: React.FC<SendInvoiceModalProps> = ({
                 issue_date: values.issue_date,
                 due_date: values.due_date,
                 amount_usd: parseFloat(values.amount_usd),
-                status: 'ISSUED',
+                status: 'NOT_PAID',
                 created_by: appUser?.id,
             };
 

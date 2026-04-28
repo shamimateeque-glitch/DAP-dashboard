@@ -61,7 +61,7 @@ const UpdateInvoiceStatusModal: React.FC<UpdateInvoiceStatusModalProps> = ({
     const form = useForm<InvoiceStatusFormValues>({
         resolver: zodResolver(invoiceStatusSchema),
         defaultValues: {
-            status: (currentStatus as any) || 'ISSUED',
+            status: (currentStatus === 'ISSUED' ? 'NOT_PAID' : currentStatus as any) || 'NOT_PAID',
             status_date: currentStatusDate || new Date().toISOString().split('T')[0],
         },
     });
@@ -69,7 +69,7 @@ const UpdateInvoiceStatusModal: React.FC<UpdateInvoiceStatusModalProps> = ({
     React.useEffect(() => {
         if (isOpen) {
             form.reset({
-                status: (currentStatus as any) || 'ISSUED',
+                status: (currentStatus === 'ISSUED' ? 'NOT_PAID' : currentStatus as any) || 'NOT_PAID',
                 status_date: currentStatusDate || new Date().toISOString().split('T')[0],
             });
         }
@@ -103,7 +103,7 @@ const UpdateInvoiceStatusModal: React.FC<UpdateInvoiceStatusModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Paid or Not Paid</DialogTitle>
+                    <DialogTitle>Paid or Unpaid</DialogTitle>
                     <DialogDescription>
                         Update the payment status of this invoice.
                     </DialogDescription>
@@ -124,7 +124,7 @@ const UpdateInvoiceStatusModal: React.FC<UpdateInvoiceStatusModalProps> = ({
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="PAID">Paid</SelectItem>
-                                            <SelectItem value="NOT_PAID">Not Paid</SelectItem>
+                                            <SelectItem value="NOT_PAID">Unpaid</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

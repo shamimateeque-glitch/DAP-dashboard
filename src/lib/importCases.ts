@@ -425,18 +425,18 @@ function mapInvoiceStatus(value: any): string | undefined {
         return 'NOT_PAID';
     }
 
-    // ISSUED variations
+    // ISSUED variations — collapsed into NOT_PAID since the UI treats them identically
     if (str === 'issued' || str === 'sent' || str === 'invoice sent' || str === 'invoiced'
         || str === 'billed' || str === 'submitted') {
-        return 'ISSUED';
+        return 'NOT_PAID';
     }
 
     // Keyword fallback — check if the value contains key identifiers
     if (str.includes('paid') && !str.includes('not') && !str.includes('un')) return 'PAID';
     if (str.includes('not') || str.includes('unpaid') || str.includes('un paid')) return 'NOT_PAID';
-    if (str.includes('issue') || str.includes('sent') || str.includes('bill')) return 'ISSUED';
+    if (str.includes('issue') || str.includes('sent') || str.includes('bill')) return 'NOT_PAID';
 
-    console.warn(`[importCases] Unrecognized invoice status: "${String(value).trim()}" — defaulting to ISSUED. Please check this value in your Excel file.`);
+    console.warn(`[importCases] Unrecognized invoice status: "${String(value).trim()}". Please check this value in your Excel file.`);
     return undefined;
 }
 
@@ -888,7 +888,7 @@ export async function importCases(
                     issue_date: row.invoice_issue_date || row.invoice_due_date || today,
                     due_date: row.invoice_due_date || row.invoice_issue_date || today,
                     amount_usd: (row.invoice_amount_usd !== undefined && row.invoice_amount_usd !== null) ? row.invoice_amount_usd : (row.our_fee_usd ?? 0),
-                    status: row.invoice_status || 'ISSUED',
+                    status: row.invoice_status || 'NOT_PAID',
                 };
                 if (row.invoice_status_date) invoicePayload.status_date = row.invoice_status_date;
 

@@ -881,11 +881,10 @@ const CaseDetail = () => {
                                                                 <p className="font-semibold">Invoice & Payment</p>
                                                                 {getRel(caseData.invoices) && (
                                                                     <InlineEditSelect
-                                                                        value={getRel(caseData.invoices).status}
+                                                                        value={getRel(caseData.invoices).status === 'ISSUED' ? 'NOT_PAID' : getRel(caseData.invoices).status}
                                                                         options={[
-                                                                            { label: 'Issued', value: 'ISSUED' },
+                                                                            { label: 'Unpaid', value: 'NOT_PAID' },
                                                                             { label: 'Paid', value: 'PAID' },
-                                                                            { label: 'Not Paid', value: 'NOT_PAID' },
                                                                         ]}
                                                                         onSave={(v) => saveInvoiceField('status', v)}
                                                                         canEdit={can('invoices', 'edit')}
@@ -902,7 +901,7 @@ const CaseDetail = () => {
                                                                     const dueDateObj = toLocalDate(inv.due_date);
                                                                     const isOverdue = inv.status !== 'PAID' && today > dueDateObj;
                                                                     const colorClass = inv.status === 'PAID' ? "text-green-500" : isOverdue ? "text-red-500" : "text-orange-500";
-                                                                    const statusText = isOverdue ? "Overdue" : inv.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase());
+                                                                    const statusText = isOverdue ? "Overdue" : inv.status === 'PAID' ? "Paid" : "Unpaid";
 
                                                                     return (
                                                                         <div className="flex flex-col">
@@ -1028,11 +1027,10 @@ const CaseDetail = () => {
                                             <div className="space-y-1">
                                                 <p className="text-sm font-medium text-muted-foreground">Status</p>
                                                 <InlineEditSelect
-                                                    value={getRel(caseData.invoices).status}
+                                                    value={getRel(caseData.invoices).status === 'ISSUED' ? 'NOT_PAID' : getRel(caseData.invoices).status}
                                                     options={[
-                                                        { label: 'Issued', value: 'ISSUED' },
+                                                        { label: 'Unpaid', value: 'NOT_PAID' },
                                                         { label: 'Paid', value: 'PAID' },
-                                                        { label: 'Not Paid', value: 'NOT_PAID' },
                                                     ]}
                                                     onSave={(v) => saveInvoiceField('status', v)}
                                                     canEdit={can('invoices', 'edit')}
@@ -1334,10 +1332,8 @@ const CaseDetail = () => {
                                                         statusText = "(Paid)";
                                                     } else if (today > dueDateObj) {
                                                         statusText = "(Overdue)";
-                                                    } else if (inv.status === 'ISSUED') {
-                                                        statusText = "(Issued)";
                                                     } else {
-                                                        statusText = `(${inv.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase())})`;
+                                                        statusText = "(Unpaid)";
                                                     }
                                                 } else if (report?.status === 'DONE' && report?.submission_date) {
                                                     const clientName = getRel(caseData.case_uploads)?.client;

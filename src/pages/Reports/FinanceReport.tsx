@@ -448,7 +448,7 @@ export default function FinanceReport() {
                                     {AGING_BUCKET_LABELS[row.aging_bucket]}
                                   </Badge>
                                 ) : c.key === "status" ? (
-                                  <Badge variant="outline" className="text-xs">{row.status}</Badge>
+                                  <Badge variant="outline" className="text-xs">{row.status === "PAID" ? "PAID" : row.status === "—" ? "—" : "UNPAID"}</Badge>
                                 ) : c.key === "amount_usd" ? (
                                   <span className="font-mono">{fmtUSD(row.amount_usd)}</span>
                                 ) : c.key === "days_to_due" ? (
