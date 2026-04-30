@@ -1329,15 +1329,6 @@ const CaseDetail = () => {
 
                                                 if (inv?.due_date) {
                                                     displayDate = format(toLocalDate(inv.due_date), 'MMM dd, yyyy');
-                                                    const dueDateObj = toLocalDate(inv.due_date);
-
-                                                    if (inv.status === 'PAID') {
-                                                        statusText = "(Paid)";
-                                                    } else if (today > dueDateObj) {
-                                                        statusText = "(Overdue)";
-                                                    } else {
-                                                        statusText = "(Unpaid)";
-                                                    }
                                                 } else if (report?.status === 'DONE' && report?.submission_date) {
                                                     const clientName = getRel(caseData.case_uploads)?.client;
                                                     const days = getPaymentTermDays(clientName);
@@ -1353,46 +1344,6 @@ const CaseDetail = () => {
                                                     </p>
                                                 );
                                             })()}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
-                            {/* 8. Invoice Status */}
-                            {(() => {
-                                const inv = getRel(caseData.invoices);
-                                const today = new Date();
-                                today.setHours(0, 0, 0, 0);
-
-                                let icon = <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />;
-                                let colorClass = "text-muted-foreground";
-                                let statusLabel = "Not invoiced";
-                                let dateSuffix = "";
-
-                                if (inv) {
-                                    if (inv.status === 'PAID') {
-                                        icon = <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
-                                        colorClass = "text-green-500";
-                                        statusLabel = "Paid";
-                                        if (inv.status_date) {
-                                            dateSuffix = ` (${format(toLocalDate(inv.status_date), 'MMM dd, yyyy')})`;
-                                        }
-                                    } else {
-                                        const isOverdue = inv.due_date && today > toLocalDate(inv.due_date);
-                                        icon = <DollarSign className={cn("h-3.5 w-3.5", isOverdue ? "text-red-500" : "text-orange-500")} />;
-                                        colorClass = isOverdue ? "text-red-500 font-bold" : "text-orange-500 font-bold";
-                                        statusLabel = isOverdue ? "Overdue" : "Unpaid";
-                                    }
-                                }
-
-                                return (
-                                    <div className="flex items-center gap-3">
-                                        {icon}
-                                        <div>
-                                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Status</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
-                                                {statusLabel}{dateSuffix}
-                                            </p>
                                         </div>
                                     </div>
                                 );
