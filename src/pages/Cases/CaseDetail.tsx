@@ -1254,26 +1254,6 @@ const CaseDetail = () => {
                                 );
                             })()}
 
-                            {/* 5b. Invoice Issue Date */}
-                            {(() => {
-                                const inv = getRel(caseData.invoices);
-                                const colorClass = inv?.issue_date ? "text-green-500" : "text-red-500";
-                                return (
-                                    <div className="flex items-center gap-3">
-                                        <DollarSign className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
-                                        <div>
-                                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Issue Date</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
-                                                {inv?.issue_date
-                                                    ? format(toLocalDate(inv.issue_date), 'MMM dd, yyyy')
-                                                    : 'Not issued'}
-                                                {inv?.issue_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Issued)</span>}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
                             {/* 6. Destruction Due Date */}
                             {(() => {
                                 const stage = getRel(caseData.destruction_stages);
@@ -1287,6 +1267,29 @@ const CaseDetail = () => {
                                             <p className={cn("text-xs font-bold", colorClass)}>
                                                 {stage?.due_date ? format(toLocalDate(stage.due_date), 'MMM dd, yyyy') : 'Not started'}
                                                 {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* 7a. Invoice Issue Status */}
+                            {(() => {
+                                const inv = getRel(caseData.invoices);
+                                const isIssued = !!inv?.issue_date;
+                                const colorClass = isIssued ? "text-green-500" : "text-muted-foreground";
+                                return (
+                                    <div className="flex items-center gap-3">
+                                        <DollarSign className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                        <div>
+                                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Issue Status</p>
+                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                                {isIssued ? 'Issued' : 'Not Issued'}
+                                                {isIssued && (
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">
+                                                        ({format(toLocalDate(inv!.issue_date), 'MMM dd, yyyy')})
+                                                    </span>
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -1387,6 +1390,46 @@ const CaseDetail = () => {
                                         {icon}
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Status</p>
+                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                                {statusLabel}{dateSuffix}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* 8. Invoice Paid Status */}
+                            {(() => {
+                                const inv = getRel(caseData.invoices);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+
+                                let icon = <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />;
+                                let colorClass = "text-muted-foreground";
+                                let statusLabel = "Not Invoiced";
+                                let dateSuffix = "";
+
+                                if (inv) {
+                                    if (inv.status === 'PAID') {
+                                        icon = <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+                                        colorClass = "text-green-500";
+                                        statusLabel = "Paid";
+                                        if (inv.status_date) {
+                                            dateSuffix = ` (${format(toLocalDate(inv.status_date), 'MMM dd, yyyy')})`;
+                                        }
+                                    } else {
+                                        const isOverdue = inv.due_date && today > toLocalDate(inv.due_date);
+                                        icon = <DollarSign className={cn("h-3.5 w-3.5", isOverdue ? "text-red-500" : "text-orange-500")} />;
+                                        colorClass = isOverdue ? "text-red-500 font-bold" : "text-orange-500 font-bold";
+                                        statusLabel = isOverdue ? "Overdue" : "Unpaid";
+                                    }
+                                }
+
+                                return (
+                                    <div className="flex items-center gap-3">
+                                        {icon}
+                                        <div>
+                                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Paid Status</p>
                                             <p className={cn("text-xs font-bold", colorClass)}>
                                                 {statusLabel}{dateSuffix}
                                             </p>
