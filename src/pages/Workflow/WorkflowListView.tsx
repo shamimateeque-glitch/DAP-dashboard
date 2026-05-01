@@ -79,14 +79,15 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
     const [sortColumn, setSortColumn] = useState<'matter_code' | 'date' | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-    // Workflow status tab: in-progress vs done for this stage
-    const [activeTab, setActiveTab] = useState<'in_progress' | 'done'>('in_progress');
+    // Workflow status tab: in-progress vs done vs overdue for this stage
+    const [activeTab, setActiveTab] = useState<'in_progress' | 'done' | 'overdue'>('in_progress');
     const stageTable = stage === 'in_depth'
         ? 'in_depth_stages'
         : stage === 'enforcement'
             ? 'enforcement_stages'
             : 'destruction_stages';
-    const stageStatusValue = activeTab === 'in_progress' ? 'IN_PROGRESS' : 'DONE';
+    // Overdue == still IN_PROGRESS but past due_date — same base status, extra date filter below.
+    const stageStatusValue = activeTab === 'done' ? 'DONE' : 'IN_PROGRESS';
     const hideCaseStatusColumn = activeTab === 'done';
 
     const handleSort = (column: 'matter_code' | 'date') => {
@@ -119,6 +120,11 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 .from('cases')
                 .select(selectStr, { count: 'exact' })
                 .eq(`${stageTable}.status`, stageStatusValue);
+
+            if (activeTab === 'overdue') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                query = query.lt(`${stageTable}.due_date`, todayStr);
+            }
 
             if (searchTerm) {
                 const escaped = escapeLikePattern(searchTerm);
@@ -243,11 +249,17 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
 
             <Tabs
                 value={activeTab}
-                onValueChange={(v) => { setActiveTab(v as 'in_progress' | 'done'); setPage(1); }}
+                onValueChange={(v) => { setActiveTab(v as 'in_progress' | 'done' | 'overdue'); setPage(1); }}
             >
                 <TabsList>
                     <TabsTrigger value="in_progress">In Progress</TabsTrigger>
                     <TabsTrigger value="done">Done</TabsTrigger>
+                    <TabsTrigger
+                        value="overdue"
+                        className="data-[state=active]:bg-orange-500/15 data-[state=active]:text-orange-400 text-orange-400/80"
+                    >
+                        Over Due
+                    </TabsTrigger>
                 </TabsList>
             </Tabs>
 
