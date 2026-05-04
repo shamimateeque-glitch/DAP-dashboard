@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -75,6 +76,7 @@ type CaseFormValues = z.infer<typeof caseSchema>;
 const EditCaseForm = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { appUser } = useAuth();
     const { can } = usePermissions();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -181,6 +183,12 @@ const EditCaseForm = () => {
             if (error) {
                 throw error;
             }
+
+            // Invalidate caches so the case detail page and any list pages
+            // don't serve the pre-update snapshot for the next 5 minutes
+            // (global staleTime is 5m — see App.tsx).
+            await queryClient.invalidateQueries({ queryKey: ['case', id] });
+            queryClient.invalidateQueries({ queryKey: ['cases'] });
 
             toast.success('Case updated successfully');
             navigate(`/cases/${id}`);

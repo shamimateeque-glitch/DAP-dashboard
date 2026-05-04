@@ -1101,6 +1101,25 @@ const CaseDetail = () => {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+
+                        {/* ===================== NOTES TAB ===================== */}
+                        <TabsContent value="notes" className="mt-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Notes / Description</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <InlineEditField
+                                        value={caseData.notes_description}
+                                        onSave={(v) => saveCaseField('notes_description', v)}
+                                        canEdit={can('cases', 'edit')}
+                                        type="textarea"
+                                        className="text-sm whitespace-pre-wrap"
+                                        placeholder="No additional notes provided."
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
                     </Tabs>
                 </div>
 
