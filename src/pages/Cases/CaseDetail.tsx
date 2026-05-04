@@ -1123,17 +1123,24 @@ const CaseDetail = () => {
                             {/* 2. Uploaded Due Date */}
                             {(() => {
                                 const deadline = addDays(toLocalDate(caseData.case_reported_date), 7).toISOString();
-                                const isDone = !!getRel(caseData.case_uploads);
+                                const upload = getRel(caseData.case_uploads);
+                                const isDone = !!upload;
                                 const colorClass = isDone ? "text-green-500" : getDueDateColor(deadline);
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <Calendar className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Upload Deadline</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                            <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
                                                 {format(new Date(deadline), 'MMM dd, yyyy')}
-                                                {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>}
+                                                <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>
                                             </p>
+                                            {isDone && upload?.upload_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(upload.upload_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Uploaded)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1149,26 +1156,26 @@ const CaseDetail = () => {
                                     : deadline
                                         ? getDueDateColor(deadline)
                                         : "text-muted-foreground";
+                                const decisionLabel = upload?.decision_status === 'APPROVED' ? 'Approved' : 'Rejected';
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <CheckCircle2 className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <CheckCircle2 className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Client Decision</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
-                                                {hasDecision && upload?.decision_date
-                                                    ? format(toLocalDate(upload.decision_date), 'MMM dd, yyyy')
-                                                    : deadline
-                                                        ? format(new Date(deadline), 'MMM dd, yyyy')
-                                                        : 'Not uploaded'}
-                                                {hasDecision && (
-                                                    <span className="ml-1 text-[9px] font-normal opacity-80">
-                                                        ({upload?.decision_status === 'APPROVED' ? 'Approved' : 'Rejected'})
-                                                    </span>
-                                                )}
-                                                {!hasDecision && deadline && (
-                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Due)</span>
-                                                )}
-                                            </p>
+                                            {deadline ? (
+                                                <p className={cn("text-xs font-bold", hasDecision ? "text-muted-foreground" : colorClass)}>
+                                                    {format(new Date(deadline), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>
+                                                </p>
+                                            ) : (
+                                                <p className="text-xs font-bold text-muted-foreground">Not uploaded</p>
+                                            )}
+                                            {hasDecision && upload?.decision_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(upload.decision_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">({decisionLabel})</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1193,14 +1200,20 @@ const CaseDetail = () => {
                                 const isDone = stage?.status === 'DONE';
                                 const colorClass = isDone ? "text-green-500" : stage?.due_date ? getDueDateColor(stage.due_date) : "text-muted-foreground";
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <Calendar className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">In-Depth Deadline</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                            <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
                                                 {stage?.due_date ? format(toLocalDate(stage.due_date), 'MMM dd, yyyy') : 'Not started'}
-                                                {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>}
+                                                {stage?.due_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>}
                                             </p>
+                                            {isDone && stage?.status_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1219,14 +1232,20 @@ const CaseDetail = () => {
                                 const effectiveDueDate = stage?.due_date || customsFallbackDate;
                                 const colorClass = isDone ? "text-green-500" : effectiveDueDate ? getDueDateColor(effectiveDueDate) : "text-muted-foreground";
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <Zap className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <Zap className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Enforcement Deadline</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                            <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
                                                 {effectiveDueDate ? format(toLocalDate(effectiveDueDate), 'MMM dd, yyyy') : 'Not started'}
-                                                {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>}
+                                                {effectiveDueDate && <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>}
                                             </p>
+                                            {isDone && stage?.status_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1238,19 +1257,24 @@ const CaseDetail = () => {
                                 const isDone = report?.status === 'DONE';
                                 const colorClass = isDone ? "text-green-500" : report?.due_date ? getDueDateColor(report.due_date) : "text-muted-foreground";
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <FileText className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <FileText className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Final Report Date</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
-                                                {report?.submission_date
-                                                    ? format(toLocalDate(report.submission_date), 'MMM dd, yyyy')
-                                                    : report?.due_date
-                                                        ? format(toLocalDate(report.due_date), 'MMM dd, yyyy')
-                                                        : 'Not started'}
-                                                {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Submitted)</span>}
-                                                {report && !isDone && report.due_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Due)</span>}
-                                            </p>
+                                            {report?.due_date ? (
+                                                <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                    {format(toLocalDate(report.due_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>
+                                                </p>
+                                            ) : (
+                                                !isDone && <p className="text-xs font-bold text-muted-foreground">Not started</p>
+                                            )}
+                                            {isDone && report?.submission_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(report.submission_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Submitted)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1262,14 +1286,20 @@ const CaseDetail = () => {
                                 const isDone = stage?.status === 'DONE';
                                 const colorClass = isDone ? "text-green-500" : stage?.due_date ? getDueDateColor(stage.due_date) : "text-muted-foreground";
                                 return (
-                                    <div className="flex items-center gap-3">
-                                        <Trash2 className={cn("h-3.5 w-3.5", colorClass.split(' ')[0])} />
+                                    <div className="flex items-start gap-3">
+                                        <Trash2 className={cn("h-3.5 w-3.5 mt-0.5", colorClass.split(' ')[0])} />
                                         <div>
                                             <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Destruction Deadline</p>
-                                            <p className={cn("text-xs font-bold", colorClass)}>
+                                            <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
                                                 {stage?.due_date ? format(toLocalDate(stage.due_date), 'MMM dd, yyyy') : 'Not started'}
-                                                {isDone && <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>}
+                                                {stage?.due_date && <span className="ml-1 text-[9px] font-normal opacity-80">(Deadline)</span>}
                                             </p>
+                                            {isDone && stage?.status_date && (
+                                                <p className="text-xs font-bold text-green-500">
+                                                    {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
+                                                    <span className="ml-1 text-[9px] font-normal opacity-80">(Completed)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
