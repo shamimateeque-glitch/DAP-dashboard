@@ -7,9 +7,10 @@ const toLocalDate = (dateStr: string) => {
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { escapeLikePattern, sanitizeErrorMessage } from '@/lib/security';
+import { invalidateCaseRelated } from '@/lib/cacheInvalidation';
 import { Case, CaseStatus } from '@/types/database';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -85,6 +86,7 @@ const BRAND_OPTIONS = [
 
 const CaseList = ({ status }: { status?: CaseStatus }) => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { can, isAdmin } = usePermissions();
     const [searchTerm, setSearchTerm] = useState('');
     const [clientFilter, setClientFilter] = useState<string>('all');
@@ -855,14 +857,14 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                         caseId={selectedCase.id}
                         isOpen={isDecisionModalOpen}
                         onClose={() => setIsDecisionModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                     />
                     <ChangeReporterModal
                         caseId={selectedCase.id}
                         currentReporter={selectedCase.case_reported_by}
                         isOpen={isAssignModalOpen}
                         onClose={() => setIsAssignModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                     />
                 </>
             )}
@@ -870,7 +872,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
             <ImportCasesModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
-                onSuccess={refetch}
+                onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
             />
         </div>
     );

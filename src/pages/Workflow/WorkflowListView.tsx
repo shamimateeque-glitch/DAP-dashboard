@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { escapeLikePattern, sanitizeErrorMessage } from '@/lib/security';
+import { invalidateCaseRelated } from '@/lib/cacheInvalidation';
 import { Case } from '@/types/database';
 import {
     Table,
@@ -62,6 +63,7 @@ interface WorkflowListViewProps {
 
 const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
     const [showAll, setShowAll] = useState(false);
@@ -499,7 +501,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                     currentReporter={selectedCase.case_reported_by}
                     isOpen={isAssignModalOpen}
                     onClose={() => setIsAssignModalOpen(false)}
-                    onSuccess={refetch}
+                    onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                 />
             )}
 
@@ -509,7 +511,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                     stage={stage}
                     isOpen={isUpdateModalOpen}
                     onClose={() => setIsUpdateModalOpen(false)}
-                    onSuccess={refetch}
+                    onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                     currentData={getStageStatus(selectedCase)}
                 />
             )}

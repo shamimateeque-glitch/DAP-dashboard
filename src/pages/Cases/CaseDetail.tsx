@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { invalidateCaseRelated } from '@/lib/cacheInvalidation';
 import {
     Tabs,
     TabsContent,
@@ -75,6 +76,7 @@ const toLocalDate = (dateStr: string) => {
 const CaseDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { can, isAdmin } = usePermissions();
 
     const { data: caseData, isLoading, error, refetch } = useQuery({
@@ -1543,7 +1545,7 @@ const CaseDetail = () => {
                         caseId={id}
                         isOpen={uploadModalOpen}
                         onClose={() => setUploadModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                         brandName={caseData?.brand_name}
                         caseType={caseData?.case_type}
                     />
@@ -1552,13 +1554,13 @@ const CaseDetail = () => {
                         caseType={caseData.case_type}
                         isOpen={decisionModalOpen}
                         onClose={() => setDecisionModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                     />
                     <SendInvoiceModal
                         caseId={id}
                         isOpen={invoiceModalOpen}
                         onClose={() => setInvoiceModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                         defaultAmount={getRel(caseData.case_uploads)?.our_fee_usd}
                         clientName={getRel(caseData.case_uploads)?.client}
                         finalReportDate={getRel(caseData.final_reports)?.submission_date}
@@ -1571,7 +1573,7 @@ const CaseDetail = () => {
                         caseType={caseData.case_type}
                         isOpen={workflowModalOpen}
                         onClose={() => setWorkflowModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                         currentData={
                             workflowStage === 'in_depth'
                                 ? getRel(caseData.in_depth_stages)
@@ -1584,14 +1586,14 @@ const CaseDetail = () => {
                         caseId={id}
                         isOpen={finalReportModalOpen}
                         onClose={() => setFinalReportModalOpen(false)}
-                        onSuccess={refetch}
+                        onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                     />
                     {getRel(caseData.invoices) && (
                         <UpdateInvoiceStatusModal
                             invoiceId={getRel(caseData.invoices).id}
                             isOpen={invoiceStatusModalOpen}
                             onClose={() => setInvoiceStatusModalOpen(false)}
-                            onSuccess={refetch}
+                            onSuccess={() => { refetch(); invalidateCaseRelated(queryClient); }}
                             currentStatus={getRel(caseData.invoices).status}
                             currentStatusDate={getRel(caseData.invoices).status_date}
                         />
