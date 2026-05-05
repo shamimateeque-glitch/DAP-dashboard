@@ -1153,14 +1153,14 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
-                                                <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
+                                                <p className={cn("text-xs font-bold", colorClass)}>
                                                     {format(new Date(deadline), 'MMM dd, yyyy')}
-                                                    <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                    <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                 </p>
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Uploaded On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Uploaded On</p>
                                                 {isDone && upload?.upload_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(upload.upload_date), 'MMM dd, yyyy')}
@@ -1194,18 +1194,18 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
                                                 {deadline ? (
-                                                    <p className={cn("text-xs font-bold", hasDecision ? "text-muted-foreground" : colorClass)}>
+                                                    <p className={cn("text-xs font-bold", colorClass)}>
                                                         {format(new Date(deadline), 'MMM dd, yyyy')}
-                                                        <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                        <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                     </p>
                                                 ) : (
                                                     <p className="text-xs font-bold text-muted-foreground/50">—</p>
                                                 )}
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Decision On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Decision On</p>
                                                 {hasDecision && upload?.decision_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(upload.decision_date), 'MMM dd, yyyy')}
@@ -1248,18 +1248,18 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
                                                 {stage?.due_date ? (
-                                                    <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                    <p className={cn("text-xs font-bold", colorClass)}>
                                                         {format(toLocalDate(stage.due_date), 'MMM dd, yyyy')}
-                                                        <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                        <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                     </p>
                                                 ) : (
                                                     <p className="text-xs font-bold text-muted-foreground/50">Not started</p>
                                                 )}
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Completed On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Completed On</p>
                                                 {isDone && stage?.status_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
@@ -1294,18 +1294,18 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
                                                 {effectiveDueDate ? (
-                                                    <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                    <p className={cn("text-xs font-bold", colorClass)}>
                                                         {format(toLocalDate(effectiveDueDate), 'MMM dd, yyyy')}
-                                                        <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                        <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                     </p>
                                                 ) : (
                                                     <p className="text-xs font-bold text-muted-foreground/50">Not started</p>
                                                 )}
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Completed On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Completed On</p>
                                                 {isDone && stage?.status_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
@@ -1333,18 +1333,18 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
                                                 {report?.due_date ? (
-                                                    <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                    <p className={cn("text-xs font-bold", colorClass)}>
                                                         {format(toLocalDate(report.due_date), 'MMM dd, yyyy')}
-                                                        <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                        <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                     </p>
                                                 ) : (
                                                     <p className="text-xs font-bold text-muted-foreground/50">Not started</p>
                                                 )}
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Submitted On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Submitted On</p>
                                                 {isDone && report?.submission_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(report.submission_date), 'MMM dd, yyyy')}
@@ -1372,18 +1372,18 @@ const CaseDetail = () => {
                                         </div>
                                         <div className="grid grid-cols-2 divide-x divide-white/10">
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Due Date</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Due Date</p>
                                                 {stage?.due_date ? (
-                                                    <p className={cn("text-xs font-bold", isDone ? "text-muted-foreground" : colorClass)}>
+                                                    <p className={cn("text-xs font-bold", colorClass)}>
                                                         {format(toLocalDate(stage.due_date), 'MMM dd, yyyy')}
-                                                        <span className="ml-1 text-[8px] font-normal opacity-70">(Deadline)</span>
+                                                        <span className="ml-1 text-[10px] font-normal text-white">(Deadline)</span>
                                                     </p>
                                                 ) : (
                                                     <p className="text-xs font-bold text-muted-foreground/50">Not started</p>
                                                 )}
                                             </div>
                                             <div className="px-3 py-2">
-                                                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground/70">Completed On</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-white">Completed On</p>
                                                 {isDone && stage?.status_date ? (
                                                     <p className="text-xs font-bold text-green-500">
                                                         {format(toLocalDate(stage.status_date), 'MMM dd, yyyy')}
