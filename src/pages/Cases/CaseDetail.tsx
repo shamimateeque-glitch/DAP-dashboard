@@ -168,6 +168,23 @@ const CaseDetail = () => {
         return "text-orange-500 font-bold";
     };
 
+    // Color the deadline cell by whether the deadline was met:
+    //   pending  → red (past) / orange (future) via getDueDateColor
+    //   done     → green if completion <= deadline, red if completion > deadline
+    const getDeadlineCellColor = (
+        deadline: string | undefined | null,
+        completionDate: string | undefined | null,
+        isDone: boolean,
+    ) => {
+        if (!deadline) return "text-muted-foreground";
+        if (isDone && completionDate) {
+            const dl = toLocalDate(deadline);
+            const done = toLocalDate(completionDate);
+            return done <= dl ? "text-green-500 font-bold" : "text-red-500 font-bold";
+        }
+        return getDueDateColor(deadline);
+    };
+
     const handleDelete = async () => {
         setIsDeleting(true);
         try {
@@ -1144,7 +1161,7 @@ const CaseDetail = () => {
                                 const deadline = addDays(toLocalDate(caseData.case_reported_date), 7).toISOString();
                                 const upload = getRel(caseData.case_uploads);
                                 const isDone = !!upload;
-                                const colorClass = isDone ? "text-green-500" : getDueDateColor(deadline);
+                                const colorClass = getDeadlineCellColor(deadline, upload?.upload_date, isDone);
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
                                         <div className="bg-muted/30 px-3 py-1.5 flex items-center gap-2 border-b border-white/10">
@@ -1180,11 +1197,7 @@ const CaseDetail = () => {
                                 const upload = getRel(caseData.case_uploads);
                                 const hasDecision = !!upload?.decision_status && upload.decision_status !== 'WAITING';
                                 const deadline = upload ? addDays(toLocalDate(upload.upload_date), 7).toISOString() : null;
-                                const colorClass = hasDecision
-                                    ? "text-green-500"
-                                    : deadline
-                                        ? getDueDateColor(deadline)
-                                        : "text-muted-foreground";
+                                const colorClass = getDeadlineCellColor(deadline, upload?.decision_date, hasDecision);
                                 const decisionLabel = upload?.decision_status === 'APPROVED' ? 'Approved' : 'Rejected';
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
@@ -1239,7 +1252,7 @@ const CaseDetail = () => {
                                 }
                                 const stage = getRel(caseData.in_depth_stages);
                                 const isDone = stage?.status === 'DONE';
-                                const colorClass = isDone ? "text-green-500" : stage?.due_date ? getDueDateColor(stage.due_date) : "text-muted-foreground";
+                                const colorClass = getDeadlineCellColor(stage?.due_date, stage?.status_date, isDone);
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
                                         <div className="bg-muted/30 px-3 py-1.5 flex items-center gap-2 border-b border-white/10">
@@ -1285,7 +1298,7 @@ const CaseDetail = () => {
                                     : null;
 
                                 const effectiveDueDate = stage?.due_date || customsFallbackDate;
-                                const colorClass = isDone ? "text-green-500" : effectiveDueDate ? getDueDateColor(effectiveDueDate) : "text-muted-foreground";
+                                const colorClass = getDeadlineCellColor(effectiveDueDate, stage?.status_date, isDone);
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
                                         <div className="bg-muted/30 px-3 py-1.5 flex items-center gap-2 border-b border-white/10">
@@ -1324,7 +1337,7 @@ const CaseDetail = () => {
                             {(() => {
                                 const report = getRel(caseData.final_reports);
                                 const isDone = report?.status === 'DONE';
-                                const colorClass = isDone ? "text-green-500" : report?.due_date ? getDueDateColor(report.due_date) : "text-muted-foreground";
+                                const colorClass = getDeadlineCellColor(report?.due_date, report?.submission_date, isDone);
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
                                         <div className="bg-muted/30 px-3 py-1.5 flex items-center gap-2 border-b border-white/10">
@@ -1363,7 +1376,7 @@ const CaseDetail = () => {
                             {(() => {
                                 const stage = getRel(caseData.destruction_stages);
                                 const isDone = stage?.status === 'DONE';
-                                const colorClass = isDone ? "text-green-500" : stage?.due_date ? getDueDateColor(stage.due_date) : "text-muted-foreground";
+                                const colorClass = getDeadlineCellColor(stage?.due_date, stage?.status_date, isDone);
                                 return (
                                     <div className="rounded-md border border-white/10 overflow-hidden">
                                         <div className="bg-muted/30 px-3 py-1.5 flex items-center gap-2 border-b border-white/10">
