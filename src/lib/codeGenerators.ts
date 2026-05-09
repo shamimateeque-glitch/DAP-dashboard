@@ -32,6 +32,7 @@ export const BRAND_ABBREVIATIONS: Record<string, string> = {
   "Ordinary": "ORD",
   "Rolex": "RLX",
   "Patek Philip": "PTP",
+  "Peugeot": "PEU",
 };
 
 // ─── Client Codes ────────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ export const CLIENT_CODES: Record<string, string> = {
   "ONEWORLD": "OW",
   "A.A ASSOCIATES": "AA",
   "SAFEMARK": "SM",
+  "DAP-IP": "DI",
 };
 
 // ─── Case Type Codes ─────────────────────────────────────────────────────────

@@ -413,7 +413,7 @@ async function fetchDashboardData(
   const upcomingDestruction = allDestruction.filter((r) => r.status === "IN_PROGRESS" && r.due_date && isUpcoming(r.due_date)).length;
 
   // ── Client breakdown ─────────────────────────────────────────────────────
-  const clients = ["ONEWORLD", "A.A ASSOCIATES", "SAFEMARK"];
+  const clients = ["ONEWORLD", "A.A ASSOCIATES", "SAFEMARK", "DAP-IP"];
   const clientBreakdown = clients.map((key) => {
     const clientUploads = allClientUploads.filter((u) => u.client === key);
     return {

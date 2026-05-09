@@ -44,7 +44,7 @@ import { generateMatterCode, isMatterCodeDuplicate } from '@/lib/codeGenerators'
 import DuplicateErrorDialog from '@/components/DuplicateErrorDialog';
 
 const uploadSchema = z.object({
-    client: z.enum(['ONEWORLD', 'A.A ASSOCIATES', 'SAFEMARK']),
+    client: z.enum(['ONEWORLD', 'A.A ASSOCIATES', 'SAFEMARK', 'DAP-IP']),
     matter_code: z.string().optional(),
     upload_date: z.string().default(() => new Date().toISOString().split('T')[0]),
     our_fee_usd: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -185,6 +185,7 @@ const UploadToClientModal: React.FC<UploadToClientModalProps> = ({
                                             <SelectItem value="ONEWORLD">OneWorld</SelectItem>
                                             <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
                                             <SelectItem value="SAFEMARK">SafeMark</SelectItem>
+                                            <SelectItem value="DAP-IP">DAP-IP</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

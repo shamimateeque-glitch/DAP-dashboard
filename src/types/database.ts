@@ -1,7 +1,7 @@
 export type UserRole = 'SUPER_ADMIN' | 'DATA_ENTRY' | 'VIEW_ONLY';
 export type CaseStatus = 'IN_HAND' | 'UPLOADED' | 'AWAITING_DECISION' | 'APPROVED' | 'REJECTED' | 'IN_DEPTH' | 'ENFORCEMENT' | 'DESTRUCTION' | 'CLOSED';
 export type FinalReportStatus = 'PENDING' | 'DONE';
-export type Client = 'ONEWORLD' | 'A.A ASSOCIATES' | 'SAFEMARK';
+export type Client = 'ONEWORLD' | 'A.A ASSOCIATES' | 'SAFEMARK' | 'DAP-IP';
 export type DecisionStatus = 'WAITING' | 'APPROVED' | 'REJECTED';
 export type WorkflowStatus = 'IN_PROGRESS' | 'DONE';
 export type InvoiceStatus = 'ISSUED' | 'PAID' | 'NOT_PAID';

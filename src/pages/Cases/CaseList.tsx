@@ -281,6 +281,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                 if (code === 'OW') return 'ONEWORLD';
                 if (code === 'SM') return 'SAFEMARK';
                 if (code === 'AA') return 'A.A ASSOCIATES';
+                if (code === 'DI') return 'DAP-IP';
             }
         }
         return 'N/A';
@@ -562,6 +563,7 @@ const CaseList = ({ status }: { status?: CaseStatus }) => {
                         <SelectItem value="ONEWORLD">OneWorld</SelectItem>
                         <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
                         <SelectItem value="SAFEMARK">SafeMark</SelectItem>
+                        <SelectItem value="DAP-IP">DAP-IP</SelectItem>
                     </SelectContent>
                 </Select>
 

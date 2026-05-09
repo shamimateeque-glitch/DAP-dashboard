@@ -225,6 +225,9 @@ const CaseDetail = () => {
 
             toast.success('Case reopened — back to Decision Waiting');
             refetch();
+            // Invalidate list caches so /rejected, /awaiting-decision, etc.
+            // don't serve the pre-reopen status for the next 5 minutes.
+            queryClient.invalidateQueries({ queryKey: ['cases'] });
         } catch (error: any) {
             toast.error(sanitizeErrorMessage(error, 'Error reopening case'));
         } finally {
@@ -425,6 +428,7 @@ const CaseDetail = () => {
                                                     { label: 'OneWorld', value: 'OneWorld' },
                                                     { label: 'A.A Associates', value: 'A.A Associates' },
                                                     { label: 'SafeMark', value: 'SafeMark' },
+                                                    { label: 'DAP-IP', value: 'DAP-IP' },
                                                 ]}
                                                 onSave={(v) => saveUploadField('client', v)}
                                                 canEdit={can('cases', 'edit') && !!getRel(caseData.case_uploads)}
@@ -589,6 +593,7 @@ const CaseDetail = () => {
                                                                     { label: 'OneWorld', value: 'OneWorld' },
                                                                     { label: 'A.A Associates', value: 'A.A Associates' },
                                                                     { label: 'SafeMark', value: 'SafeMark' },
+                                                                    { label: 'DAP-IP', value: 'DAP-IP' },
                                                                 ]}
                                                                 onSave={(v) => saveUploadField('client', v)}
                                                                 canEdit={can('workflow', 'edit')}

@@ -196,6 +196,7 @@ function normalizeClientName(clientName?: string): string {
     if (upper === 'ONEWORLD' || upper.includes('ONEWORLD')) return 'OneWorld';
     if (upper === 'A.A ASSOCIATES' || upper === 'AA' || upper === 'A.A' || upper.includes('ASSOCIATES')) return 'A.A Associates';
     if (upper === 'SAFEMARK' || upper === 'SAFE MARK' || upper.includes('SAFEMARK')) return 'SafeMark';
+    if (upper === 'DAP-IP' || upper === 'DAP IP' || upper === 'DAPIP' || upper === 'DI') return 'DAP-IP';
     return clientName;
 }
 
@@ -209,6 +210,7 @@ function getClientName(c: any): string {
             if (code === 'OW') return 'OneWorld';
             if (code === 'SM') return 'SafeMark';
             if (code === 'AA') return 'A.A Associates';
+            if (code === 'DI') return 'DAP-IP';
         }
     }
     return 'N/A';

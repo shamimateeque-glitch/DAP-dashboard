@@ -2,6 +2,7 @@ export const PAYMENT_TERMS: Record<string, number> = {
     'OneWorld': 90,
     'A.A Associates': 90,
     'SafeMark': 90,
+    'DAP-IP': 90,
 };
 
 export const normalizeClientName = (clientName?: string): string => {
@@ -13,6 +14,7 @@ export const normalizeClientName = (clientName?: string): string => {
     if (upper === 'ONEWORLD' || upper.includes('ONEWORLD')) return 'OneWorld';
     if (upper === 'A.A ASSOCIATES' || upper === 'AA' || upper === 'A.A' || upper.includes('ASSOCIATES')) return 'A.A Associates';
     if (upper === 'SAFEMARK' || upper === 'SAFE MARK' || upper.includes('SAFEMARK')) return 'SafeMark';
+    if (upper === 'DAP-IP' || upper === 'DAP IP' || upper === 'DAPIP' || upper === 'DI') return 'DAP-IP';
 
     return clientName; // fallback to original if unknown
 };

@@ -264,6 +264,7 @@ function getClientName(c: any): string {
             if (code === 'SM') return 'SafeMark';
             if (code === 'AA') return 'A.A Associates';
             if (code === 'A.A ASSOCIATES') return 'A.A Associates';
+            if (code === 'DI') return 'DAP-IP';
         }
     }
     return 'N/A';
@@ -686,6 +687,7 @@ const PendingWorkReport = ({ reportType }: { reportType: ReportType }) => {
                         <SelectItem value="ONEWORLD">OneWorld</SelectItem>
                         <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
                         <SelectItem value="SAFEMARK">SafeMark</SelectItem>
+                        <SelectItem value="DAP-IP">DAP-IP</SelectItem>
                     </SelectContent>
                 </Select>
 

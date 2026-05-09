@@ -523,6 +523,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
                         <SelectItem value="ONEWORLD">OneWorld</SelectItem>
                         <SelectItem value="A.A ASSOCIATES">A.A Associates</SelectItem>
                         <SelectItem value="SAFEMARK">SafeMark</SelectItem>
+                        <SelectItem value="DAP-IP">DAP-IP</SelectItem>
                     </SelectContent>
                 </Select>
 

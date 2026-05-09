@@ -19,6 +19,7 @@ const CLIENTS = [
   { value: "ONEWORLD", label: "OneWorld" },
   { value: "A.A ASSOCIATES", label: "A.A Associates" },
   { value: "SAFEMARK", label: "SafeMark" },
+  { value: "DAP-IP", label: "DAP-IP" },
 ];
 
 type FlatCase = {

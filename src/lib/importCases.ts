@@ -324,6 +324,11 @@ function mapClient(value: any): string | undefined {
         'SAFEMARK IP': 'SAFEMARK',
         'SAFE-MARK': 'SAFEMARK',
         'SAFE-MARK IP': 'SAFEMARK',
+        'DI': 'DAP-IP',
+        'DAP': 'DAP-IP',
+        'DAP-IP': 'DAP-IP',
+        'DAP IP': 'DAP-IP',
+        'DAPIP': 'DAP-IP',
     };
 
     if (clientMap[str]) return clientMap[str];
@@ -333,6 +338,7 @@ function mapClient(value: any): string | undefined {
     if (str.includes('SAFEMARK') || str.includes('SAFE MARK') || str.includes('SAFE-MARK')) return 'SAFEMARK';
     if (str.includes('SAFE') && str.includes('MARK')) return 'SAFEMARK';
     if (str.includes('ASSOCIATES') || str.includes('A.A') || str === 'AA') return 'A.A ASSOCIATES';
+    if (str.includes('DAP-IP') || str.includes('DAP IP') || str === 'DAPIP' || str === 'DAP') return 'DAP-IP';
 
     // Single-letter code fallback (in case column has just initials)
     if (str === 'O' || str === 'OW') return 'ONEWORLD';

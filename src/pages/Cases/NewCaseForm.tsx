@@ -64,6 +64,7 @@ const DEFAULT_BRANDS: string[] = [
     "New Balance",
     "Nike",
     "Nutella",
+    "Peugeot",
     "Porsche",
     "Puma",
     "Reebok",

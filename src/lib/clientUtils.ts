@@ -8,6 +8,7 @@ export function displayClientName(enumValue: string | undefined | null): string 
         'SAFEMARK': 'SafeMark',
         'ONEWORLD': 'OneWorld',
         'A.A ASSOCIATES': 'A.A Associates',
+        'DAP-IP': 'DAP-IP',
     };
 
     return displayMap[enumValue] || enumValue;
