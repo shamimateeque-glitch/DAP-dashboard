@@ -9,5 +9,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<any>(
     supabaseUrl || '',
-    supabaseAnonKey || ''
+    supabaseAnonKey || '',
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            flowType: 'pkce',
+            storageKey: 'dap-auth',
+        },
+        global: {
+            headers: { 'x-application-name': 'dap-caseview' },
+        },
+    }
 );

@@ -52,7 +52,14 @@
       "Bash(node -e \":*)",
       "Bash(find /c/Users/Erum/Documents/midnight-glow-dashboard-main/DAP-dashboard-main/src -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx \\\\\\))",
       "Bash(find /c/Users/Erum/Documents/midnight-glow-dashboard-main/DAP-dashboard-main/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git credential *)",
+      "Bash(git check-ignore *)",
+      "Bash(git checkout *)"
     ]
   }
 }
