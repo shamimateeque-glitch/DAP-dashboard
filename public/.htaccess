@@ -35,15 +35,13 @@ RewriteRule . /index.html [L]
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 
     # Content Security Policy
-    # NOTE: replace <YOUR-PROJECT>.supabase.co with your actual Supabase project URL
-    # (the host portion of VITE_SUPABASE_URL). The same host appears twice below:
-    # once for REST/Auth (https://) and once for Realtime (wss://).
+    # Allows the Supabase project host for REST/Auth (https://) and Realtime (wss://).
     Header always set Content-Security-Policy "default-src 'self'; \
         script-src 'self'; \
         style-src 'self' 'unsafe-inline'; \
-        img-src 'self' data: blob: https://<YOUR-PROJECT>.supabase.co; \
+        img-src 'self' data: blob: https://pweaykxbkbqwlxokdbci.supabase.co; \
         font-src 'self' data:; \
-        connect-src 'self' https://<YOUR-PROJECT>.supabase.co wss://<YOUR-PROJECT>.supabase.co; \
+        connect-src 'self' https://pweaykxbkbqwlxokdbci.supabase.co wss://pweaykxbkbqwlxokdbci.supabase.co; \
         frame-ancestors 'none'; \
         base-uri 'self'; \
         form-action 'self'; \
