@@ -53,13 +53,7 @@ interface InvoiceListProps {
     status?: 'ISSUED' | 'PAID' | 'NOT_PAID' | 'OVERDUE' | 'all';
 }
 
-const BRAND_OPTIONS = [
-    "American Eagle", "BMW", "Biscoff Creamy", "Burberry", "Cavin Klein",
-    "Champion", "Gucci", "Guess", "Harley davidson", "Hugo Boss",
-    "Levis", "Mars", "New Balance", "Nike", "Nutella",
-    "Porsche", "Puma", "Reebok", "Tommy Hilfiger", "Toyota",
-    "US polo", "WD-40"
-];
+import { DEFAULT_BRANDS as BRAND_OPTIONS } from '@/lib/brands';
 
 const InvoiceList: React.FC<InvoiceListProps> = ({ status: statusFilter }) => {
     const navigate = useNavigate();

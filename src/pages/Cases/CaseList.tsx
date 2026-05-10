@@ -76,13 +76,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 
-const BRAND_OPTIONS = [
-    "American Eagle", "BMW", "Biscoff Creamy", "Burberry", "Cavin Klein",
-    "Champion", "Gucci", "Guess", "Harley davidson", "Hugo Boss",
-    "Levis", "Mars", "New Balance", "Nike", "Nutella",
-    "Porsche", "Puma", "Reebok", "Tommy Hilfiger", "Toyota",
-    "US polo", "WD-40"
-];
+import { DEFAULT_BRANDS as BRAND_OPTIONS } from '@/lib/brands';
 
 const CaseList = ({ status }: { status?: CaseStatus }) => {
     const navigate = useNavigate();

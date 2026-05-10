@@ -14,7 +14,7 @@ export const normalizeClientName = (clientName?: string): string => {
     if (upper === 'ONEWORLD' || upper.includes('ONEWORLD')) return 'OneWorld';
     if (upper === 'A.A ASSOCIATES' || upper === 'AA' || upper === 'A.A' || upper.includes('ASSOCIATES')) return 'A.A Associates';
     if (upper === 'SAFEMARK' || upper === 'SAFE MARK' || upper.includes('SAFEMARK')) return 'SafeMark';
-    if (upper === 'DAP-IP' || upper === 'DAP IP' || upper === 'DAPIP' || upper === 'DI') return 'DAP-IP';
+    if (upper === 'DAP-IP' || upper === 'DAP IP' || upper === 'DAPIP' || upper === 'DAP' || upper === 'DI') return 'DAP-IP';
 
     return clientName; // fallback to original if unknown
 };

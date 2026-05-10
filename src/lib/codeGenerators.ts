@@ -1,46 +1,15 @@
 import { supabase } from '@/lib/supabase';
 
-// ─── Brand Abbreviations ────────────────────────────────────────────────────
-export const BRAND_ABBREVIATIONS: Record<string, string> = {
-  "Hugo Boss": "HUG",
-  "Tommy Hilfiger": "TOM",
-  "Calvin Klein": "CK",
-  "Cavin Klein": "CK",
-  "Puma": "PUM",
-  "Guess": "GUS",
-  "Porsche": "POR",
-  "WD-40": "WD",
-  "Harley davidson": "HD",
-  "Harley Davidson": "HD",
-  "Champion": "CHP",
-  "Reebok": "RBK",
-  "Levis": "LEV",
-  "Levi's": "LEV",
-  "New Balance": "NB",
-  "Nike": "NK",
-  "Gucci": "GUC",
-  "Burberry": "BRB",
-  "American Eagle": "AE",
-  "BMW": "BMW",
-  "Toyota": "TOY",
-  "US polo": "USP",
-  "U.S. Polo Assn": "USP",
-  "Mars": "MRS",
-  "Nutella": "NUT",
-  "Biscoff Creamy": "BIS",
-  "Skechers": "SKE",
-  "Ordinary": "ORD",
-  "Rolex": "RLX",
-  "Patek Philip": "PTP",
-  "Peugeot": "PEU",
-};
+// Brand list and abbreviations live in `@/lib/brands` — single source of truth.
+export { BRAND_ABBREVIATIONS } from '@/lib/brands';
+import { BRAND_ABBREVIATIONS } from '@/lib/brands';
 
 // ─── Client Codes ────────────────────────────────────────────────────────────
 export const CLIENT_CODES: Record<string, string> = {
   "ONEWORLD": "OW",
   "A.A ASSOCIATES": "AA",
   "SAFEMARK": "SM",
-  "DAP-IP": "DI",
+  "DAP-IP": "DAP",
 };
 
 // ─── Case Type Codes ─────────────────────────────────────────────────────────
@@ -80,7 +49,7 @@ function getYearSuffix(year?: number): string {
 // ─── Matter Code: BRAND.TYPE.NNN/CLIENT-YY ───────────────────────────────────
 // Serial is GLOBAL per year (across all brands/clients/types)
 
-const MATTER_CODE_REGEX = /^[A-Z]{2,3}\.[A-Z]{3}\.(\d{3})\/[A-Z]{2}-(\d{2})$/;
+const MATTER_CODE_REGEX = /^[A-Z]{2,3}\.[A-Z]{3}\.(\d{3})\/[A-Z]{2,3}-(\d{2})$/;
 
 export async function generateMatterCode(
   brandName: string,
@@ -133,7 +102,7 @@ export async function generateMatterCode(
 // ─── Invoice Number: INV-BRAND.TYPE.NN/CLIENT-YY ────────────────────────────
 // Serial is per brand+client+year
 
-const INVOICE_NUM_REGEX = /^INV-([A-Z]{2,3})\.[A-Z]{3}\.(\d{2,3})\/([A-Z]{2})-(\d{2})$/;
+const INVOICE_NUM_REGEX = /^INV-([A-Z]{2,3})\.[A-Z]{3}\.(\d{2,3})\/([A-Z]{2,3})-(\d{2})$/;
 
 export async function generateInvoiceNumber(
   brandName: string,

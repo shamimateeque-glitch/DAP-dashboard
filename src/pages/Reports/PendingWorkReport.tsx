@@ -43,15 +43,7 @@ interface ReportConfig {
     dueDateField?: string;
 }
 
-// ─── Brand options (shared with CaseList) ────────────────────────────────────
-
-const BRAND_OPTIONS = [
-    "American Eagle", "BMW", "Biscoff Creamy", "Burberry", "Cavin Klein",
-    "Champion", "Gucci", "Guess", "Harley davidson", "Hugo Boss",
-    "Levis", "Mars", "New Balance", "Nike", "Nutella",
-    "Porsche", "Puma", "Reebok", "Tommy Hilfiger", "Toyota",
-    "US polo", "WD-40",
-];
+import { DEFAULT_BRANDS as BRAND_OPTIONS } from '@/lib/brands';
 
 // ─── Column definitions per report type ──────────────────────────────────────
 

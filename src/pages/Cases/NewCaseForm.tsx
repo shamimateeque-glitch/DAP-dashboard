@@ -48,31 +48,7 @@ import {
 
 import { PROVINCE_CITIES } from '@/lib/locationData';
 
-const DEFAULT_BRANDS: string[] = [
-    "American Eagle",
-    "BMW",
-    "Biscoff Creamy",
-    "Burberry",
-    "Cavin Klein",
-    "Champion",
-    "Gucci",
-    "Guess",
-    "Harley davidson",
-    "Hugo Boss",
-    "Levis",
-    "Mars",
-    "New Balance",
-    "Nike",
-    "Nutella",
-    "Peugeot",
-    "Porsche",
-    "Puma",
-    "Reebok",
-    "Tommy Hilfiger",
-    "Toyota",
-    "US polo",
-    "WD-40"
-].sort();
+import { DEFAULT_BRANDS } from '@/lib/brands';
 
 const DEFAULT_CATEGORIES: string[] = [
     "Factory",
