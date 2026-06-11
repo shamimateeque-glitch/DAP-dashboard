@@ -22,6 +22,7 @@ export const BRANDS: Brand[] = [
     { name: "Gucci", code: "GUC" },
     { name: "Guess", code: "GUS" },
     { name: "Harley davidson", code: "HD", aliases: ["Harley Davidson"] },
+    { name: "HOKA", code: "HOK" },
     { name: "Hugo Boss", code: "HUG" },
     { name: "Levis", code: "LEV", aliases: ["Levi's"] },
     { name: "Mars", code: "MRS" },
