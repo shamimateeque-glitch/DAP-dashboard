@@ -26,6 +26,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", defaultHref: "/" },
+  { icon: ClipboardList, label: "My Pending Work", defaultHref: "/my-pending-work" },
   { icon: ClipboardList, label: "Pending Work", defaultHref: "/pending-work" },
   { icon: FilePlus, label: "Open New Case", defaultHref: "/new-case" },
   {
@@ -64,11 +65,16 @@ const navItems: NavItem[] = [
 interface AppSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  /** Rendered inside the mobile drawer: always expanded, no collapse toggle, closes on nav. */
+  mobile?: boolean;
+  onNavigate?: () => void;
 }
 
-const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
+const AppSidebar = ({ collapsed: collapsedProp, onToggleCollapse, mobile = false, onNavigate }: AppSidebarProps) => {
   const location = useLocation();
   const { can, role } = usePermissions();
+  // In the mobile drawer the sidebar is always shown expanded.
+  const collapsed = mobile ? false : collapsedProp;
 
   // Auto-open the menu section that matches the current route
   const getActiveMenus = (): string[] => {
@@ -111,6 +117,9 @@ const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
 
   const filteredItems = navItems.filter(item => {
     const label = item.label.toLowerCase();
+    // Investigation & Enforcement team: locked to their single financial-free page.
+    if (role === 'INVESTIGATION_TEAM') return label === "my pending work";
+    if (label === "my pending work") return false; // team-only entry, hidden for all other roles
     if (label === "dashboard") return true;
     if (label === "open new case") return can('cases', 'create');
     if (label === "alerts & reminders") return can('alerts', 'view');
@@ -185,6 +194,7 @@ const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
                 <NavLink
                   to={item.defaultHref || href}
                   title={collapsed ? item.label : undefined}
+                  onClick={onNavigate}
                   className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary"
@@ -223,6 +233,7 @@ const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
                         <NavLink
                           key={child}
                           to={childHref}
+                          onClick={onNavigate}
                           className={({ isActive }) => `w-full block pl-11 pr-3 py-1.5 text-sm rounded-lg transition-colors ${isActive
                             ? "text-primary font-medium"
                             : "text-muted-foreground hover:text-sidebar-foreground"
@@ -254,15 +265,17 @@ const AppSidebar = ({ collapsed, onToggleCollapse }: AppSidebarProps) => {
         )}
       </div>
 
-      {/* Collapse toggle */}
-      <div className="p-2 border-t border-sidebar-border">
-        <button
-          onClick={onToggleCollapse}
-          className="w-full flex items-center justify-center py-2 rounded-lg text-muted-foreground hover:bg-sidebar-accent transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
+      {/* Collapse toggle — hidden in the mobile drawer */}
+      {!mobile && (
+        <div className="p-2 border-t border-sidebar-border">
+          <button
+            onClick={onToggleCollapse}
+            className="w-full flex items-center justify-center py-2 rounded-lg text-muted-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
+      )}
     </motion.aside>
   );
 };

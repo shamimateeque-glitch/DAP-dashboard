@@ -59,9 +59,14 @@ import { displayClientName } from '@/lib/clientUtils';
 interface WorkflowListViewProps {
     stage: 'in_depth' | 'enforcement' | 'destruction';
     title: string;
+    /** View-only mode (e.g. Investigation team): hides the row actions column and
+     *  the Assign/Update/Delete modals. Row-tap navigation to the case is kept. */
+    readOnly?: boolean;
+    /** Hide the page-level title/description header (used when embedded under tabs). */
+    hideHeader?: boolean;
 }
 
-const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => {
+const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title, readOnly = false, hideHeader = false }) => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -91,6 +96,9 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
     // Overdue == still IN_PROGRESS but past due_date — same base status, extra date filter below.
     const stageStatusValue = activeTab === 'done' ? 'DONE' : 'IN_PROGRESS';
     const hideCaseStatusColumn = activeTab === 'done';
+    // Column count for loading/empty colSpan: 10 base columns, minus the Case Status
+    // column when on the Done tab, minus the actions column in read-only mode.
+    const colSpanCount = 10 - (hideCaseStatusColumn ? 1 : 0) - (readOnly ? 1 : 0);
 
     const handleSort = (column: 'matter_code' | 'date') => {
         if (sortColumn === column) {
@@ -240,14 +248,16 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-                    <p className="text-muted-foreground">
-                        Track progress of cases in the {title.toLowerCase()} phase.
-                    </p>
+            {!hideHeader && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+                        <p className="text-muted-foreground">
+                            Track progress of cases in the {title.toLowerCase()} phase.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <Tabs
                 value={activeTab}
@@ -288,7 +298,56 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 )}
             </div>
 
-            <div className="rounded-md border bg-card">
+            {/* Mobile card list (phones) — table is unusable at narrow widths */}
+            <div className="space-y-3 md:hidden">
+                {isLoading ? (
+                    <div className="rounded-md border bg-card p-6 text-center text-sm text-muted-foreground">
+                        Loading workflow cases...
+                    </div>
+                ) : sortedData && sortedData.length > 0 ? (
+                    sortedData.map((c: any) => {
+                        const stageData = getStageStatus(c);
+                        const clientVal = getUpload(c)?.client;
+                        return (
+                            <div
+                                key={c.id}
+                                onClick={() => navigate(`/cases/${c.id}`)}
+                                className="rounded-lg border bg-card p-4 space-y-2 cursor-pointer active:bg-accent/50 transition-colors"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-mono text-xs font-semibold text-blue-600">{c.matter_code || '-'}</span>
+                                    {stageData ? (
+                                        <Badge variant={stageData.status === 'DONE' ? 'success' : 'default'}>
+                                            {stageData.status.replace('_', ' ')}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-muted-foreground">NOT STARTED</Badge>
+                                    )}
+                                </div>
+                                <div className="font-medium text-sm">{c.target_name}</div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                                    <span>{c.brand_name}</span>
+                                    <span>{clientVal ? displayClientName(clientVal) : '-'}</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 pt-1">
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <span className="text-muted-foreground">{getDateLabel()}:</span>
+                                        <span className="font-medium">{getStageDate(stageData)}</span>
+                                    </div>
+                                    {!hideCaseStatusColumn && <StatusBadge status={c.case_status} />}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="rounded-md border bg-card p-6 text-center text-sm text-muted-foreground">
+                        No cases found in this stage.
+                    </div>
+                )}
+            </div>
+
+            <div className="rounded-md border bg-card hidden md:block">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -305,13 +364,13 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                                 {getDateLabel()} {getSortIcon('date')}
                             </TableHead>
                             <TableHead>Workflow Status</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
+                            {!readOnly && <TableHead className="w-[50px]"></TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={hideCaseStatusColumn ? 9 : 10} className="h-24 text-center">
+                                <TableCell colSpan={colSpanCount} className="h-24 text-center">
                                     Loading workflow cases...
                                 </TableCell>
                             </TableRow>
@@ -369,6 +428,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                                                 <Badge variant="outline" className="text-muted-foreground">NOT STARTED</Badge>
                                             )}
                                         </TableCell>
+                                        {!readOnly && (
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -422,12 +482,13 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
+                                        )}
                                     </TableRow>
                                 );
                             })
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={hideCaseStatusColumn ? 9 : 10} className="h-24 text-center">
+                                <TableCell colSpan={colSpanCount} className="h-24 text-center">
                                     No cases found in this stage.
                                 </TableCell>
                             </TableRow>
@@ -495,7 +556,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 </AlertDialogContent>
             </AlertDialog>
 
-            {selectedCase && (
+            {!readOnly && selectedCase && (
                 <ChangeReporterModal
                     caseId={selectedCase.id}
                     currentReporter={selectedCase.case_reported_by}
@@ -505,7 +566,7 @@ const WorkflowListView: React.FC<WorkflowListViewProps> = ({ stage, title }) => 
                 />
             )}
 
-            {selectedCase && (
+            {!readOnly && selectedCase && (
                 <UpdateWorkflowModal
                     caseId={selectedCase.id}
                     stage={stage}

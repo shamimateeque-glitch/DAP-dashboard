@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, Moon, Sun, CheckCircle2, AlertTriangle, X, ExternalLink, CheckCheck } from "lucide-react";
+import { Search, Bell, Moon, Sun, CheckCircle2, AlertTriangle, X, ExternalLink, CheckCheck, Menu } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +25,7 @@ const ALERT_DISPLAY: Record<string, { label: string; color: string }> = {
   INVOICE_OVERDUE:          { label: "Invoice Overdue",             color: "#dc2626" },
 };
 
-const AppHeader = () => {
+const AppHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const { theme, toggleTheme } = useTheme();
   const { appUser, signOut } = useAuth();
   const navigate = useNavigate();
@@ -108,12 +108,25 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
-      {/* Page Title */}
-      <h1 className="text-lg font-semibold text-foreground">DAP CaseView - Dashboard</h1>
+    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 md:px-6 gap-2">
+      {/* Left: mobile menu button + page title */}
+      <div className="flex items-center gap-2 min-w-0">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="md:hidden w-9 h-9 rounded-lg flex items-center justify-center bg-muted hover:bg-secondary transition-colors flex-shrink-0"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5 text-muted-foreground" />
+          </button>
+        )}
+        <h1 className="text-base md:text-lg font-semibold text-foreground truncate">
+          DAP CaseView<span className="hidden sm:inline"> - Dashboard</span>
+        </h1>
+      </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
         {/* Search */}
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

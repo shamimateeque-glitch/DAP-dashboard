@@ -1,0 +1,89 @@
+name: Mobile build
+
+# Builds the Capacitor apps in the cloud so iOS can be produced without local Mac
+# hardware (the team works on Windows). Android produces an installable debug APK;
+# iOS does an unsigned smoke build to prove it compiles. Signed release builds
+# (AAB / IPA) need signing secrets added later — see the notes at the bottom.
+
+on:
+  push:
+    # `mobile-app` is the APK-build branch — it does NOT auto-deploy the website
+    # (deploy.yml only runs on main), so APKs can be built without a production release.
+    branches: [main, mobile-app]
+  workflow_dispatch: {}
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web + sync Android
+        run: |
+          npm run build
+          npx cap sync android
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web + sync iOS
+        run: |
+          npm run build
+          npx cap sync ios
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Build iOS app (unsigned smoke build)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+# To produce distributable builds, add repository secrets and extend the jobs:
+#   Android (Play): ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#                   ANDROID_KEY_PASSWORD  → sign `bundleRelease` (.aab).
+#   iOS (App Store): APPLE certificate (.p12) + provisioning profile as secrets, then
+#                    `xcodebuild -exportArchive` with an ExportOptions.plist.
+# Also add VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY as repo secrets (referenced above).

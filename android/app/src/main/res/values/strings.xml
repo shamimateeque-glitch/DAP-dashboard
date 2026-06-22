@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DAP Field Team</string>
+    <string name="title_activity_main">DAP Field Team</string>
+    <string name="package_name">inc.ventura.dap.fieldteam</string>
+    <string name="custom_url_scheme">inc.ventura.dap.fieldteam</string>
+</resources>

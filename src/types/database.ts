@@ -1,4 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'DATA_ENTRY' | 'VIEW_ONLY';
+export type UserRole = 'SUPER_ADMIN' | 'DATA_ENTRY' | 'VIEW_ONLY' | 'INVESTIGATION_TEAM';
 export type CaseStatus = 'IN_HAND' | 'UPLOADED' | 'AWAITING_DECISION' | 'APPROVED' | 'REJECTED' | 'IN_DEPTH' | 'ENFORCEMENT' | 'DESTRUCTION' | 'CLOSED';
 export type FinalReportStatus = 'PENDING' | 'DONE';
 export type Client = 'ONEWORLD' | 'A.A ASSOCIATES' | 'SAFEMARK' | 'DAP-IP';

@@ -42,7 +42,7 @@ const userSchema = z.object({
         .regex(/[0-9]/, 'Password must contain at least one number')
         .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
     full_name: z.string().min(2, 'Full name is required'),
-    role: z.enum(['SUPER_ADMIN', 'DATA_ENTRY', 'VIEW_ONLY']),
+    role: z.enum(['SUPER_ADMIN', 'DATA_ENTRY', 'VIEW_ONLY', 'INVESTIGATION_TEAM']),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -186,6 +186,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                             <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                                             <SelectItem value="DATA_ENTRY">Data Entry</SelectItem>
                                             <SelectItem value="VIEW_ONLY">View Only</SelectItem>
+                                            <SelectItem value="INVESTIGATION_TEAM">Investigation Team</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

@@ -9,6 +9,8 @@ export const usePermissions = () => {
             isAdmin: false,
             isDataEntry: false,
             isViewOnly: false,
+            isInvestigationTeam: false,
+            canSeeFinancials: false,
             can: () => false,
             role: null as UserRole | null,
         };
@@ -32,6 +34,9 @@ export const usePermissions = () => {
         isAdmin: role === 'SUPER_ADMIN',
         isDataEntry: role === 'DATA_ENTRY',
         isViewOnly: role === 'VIEW_ONLY',
+        isInvestigationTeam: role === 'INVESTIGATION_TEAM',
+        // Field/Investigation team must never see financial data (fees, invoices, amounts).
+        canSeeFinancials: role !== 'INVESTIGATION_TEAM',
         can,
         role,
     };

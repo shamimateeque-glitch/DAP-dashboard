@@ -77,7 +77,7 @@ const CaseDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { can, isAdmin } = usePermissions();
+    const { can, isAdmin, isInvestigationTeam } = usePermissions();
 
     const { data: caseData, isLoading, error, refetch } = useQuery({
         queryKey: ['case', id],
@@ -376,10 +376,10 @@ const CaseDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className={`grid w-full ${isInvestigationTeam ? 'grid-cols-3' : 'grid-cols-4'}`}>
                             <TabsTrigger value="details">Details</TabsTrigger>
                             <TabsTrigger value="workflow">Workflow</TabsTrigger>
-                            <TabsTrigger value="invoice">Invoice</TabsTrigger>
+                            {!isInvestigationTeam && <TabsTrigger value="invoice">Invoice</TabsTrigger>}
                             <TabsTrigger value="notes">Notes</TabsTrigger>
                         </TabsList>
 
@@ -895,6 +895,7 @@ const CaseDetail = () => {
                                                 </div>
 
                                                 {/* 7. Invoice & Payment */}
+                                                {!isInvestigationTeam && (
                                                 <div className="relative flex items-center justify-between gap-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`z-10 rounded-full p-1 shadow-lg ${getRel(caseData.invoices)?.status === 'PAID' ? 'bg-green-500 text-white' : getRel(caseData.invoices) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
@@ -964,6 +965,7 @@ const CaseDetail = () => {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                )}
 
                                                 {/* 8. Destruction */}
                                                 <div className="relative flex items-center justify-between gap-6">
@@ -1028,6 +1030,7 @@ const CaseDetail = () => {
                         </TabsContent>
 
                         {/* ===================== INVOICE TAB ===================== */}
+                        {!isInvestigationTeam && (
                         <TabsContent value="invoice" className="mt-6">
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between">
@@ -1123,6 +1126,7 @@ const CaseDetail = () => {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                        )}
 
                         {/* ===================== NOTES TAB ===================== */}
                         <TabsContent value="notes" className="mt-6">
@@ -1416,6 +1420,8 @@ const CaseDetail = () => {
                                 );
                             })()}
 
+                            {/* 7a-8. Invoice cards — hidden from the financial-free Investigation team */}
+                            {!isInvestigationTeam && (<>
                             {/* 7a. Invoice Issue Status */}
                             {(() => {
                                 const inv = getRel(caseData.invoices);
@@ -1531,6 +1537,7 @@ const CaseDetail = () => {
                                     </div>
                                 );
                             })()}
+                            </>)}
 
                             <div className="pt-2 border-t border-white/5 flex items-center gap-3">
                                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1555,13 +1562,14 @@ const CaseDetail = () => {
                             const invoice = getRel(caseData.invoices);
                             const finalReport = getRel(caseData.final_reports);
 
-                            if (invoice && invoice.status === 'PAID') {
+                            // Invoice/payment branches are financial — never shown to the Investigation team.
+                            if (!isInvestigationTeam && invoice && invoice.status === 'PAID') {
                                 dDate = toLocalDate(invoice.due_date);
                                 label = "Completed";
-                            } else if (invoice && invoice.status !== 'PAID' && invoice.due_date) {
+                            } else if (!isInvestigationTeam && invoice && invoice.status !== 'PAID' && invoice.due_date) {
                                 dDate = toLocalDate(invoice.due_date);
                                 label = "Invoice Due Date";
-                            } else if (finalReport && finalReport.status === 'DONE' && finalReport.submission_date) {
+                            } else if (!isInvestigationTeam && finalReport && finalReport.status === 'DONE' && finalReport.submission_date) {
                                 const days = upload?.client ? getPaymentTermDays(upload.client) : 60;
                                 dDate = addDays(toLocalDate(finalReport.submission_date), days);
                                 label = "Expected Invoice Due Date";
@@ -1625,7 +1633,8 @@ const CaseDetail = () => {
                         );
                     })()}
 
-                    {/* Fee Summary Card */}
+                    {/* Fee Summary Card — hidden from the financial-free Investigation team */}
+                    {!isInvestigationTeam && (
                     <Card className="gradient-primary text-primary-foreground">
                         <CardHeader>
                             <CardTitle className="text-lg">Fee Summary</CardTitle>
@@ -1676,6 +1685,7 @@ const CaseDetail = () => {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
                 </div>
             </div>
 

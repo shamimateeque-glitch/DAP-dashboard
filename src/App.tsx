@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
+import { usePermissions } from "./hooks/usePermissions";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -22,6 +23,7 @@ const EditCaseForm = React.lazy(() => import("./pages/Cases/EditCaseForm"));
 const InvoiceList = React.lazy(() => import("./pages/Invoices/InvoiceList"));
 const AlertsPage = React.lazy(() => import("./pages/Alerts/AlertsPage"));
 const WorkflowListView = React.lazy(() => import("./pages/Workflow/WorkflowListView"));
+const TeamPendingWork = React.lazy(() => import("./pages/Workflow/TeamPendingWork"));
 const UsersPage = React.lazy(() => import("./pages/Admin/UsersPage"));
 const AdminSettingsPage = React.lazy(() => import("./pages/Admin/SettingsPage"));
 
@@ -37,6 +39,26 @@ const PageLoader = () => (
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
 );
+
+// The Investigation & Enforcement (field) team is locked to their financial-free area:
+// only "My Pending Work" and individual case detail pages. Any other route (dashboard,
+// invoices, reports, cases lists, admin) redirects them back to /my-pending-work. This
+// is the route-level enforcement; the sidebar also hides those entries.
+const TEAM_ALLOWED_PREFIXES = ["/my-pending-work", "/cases/"];
+
+const InvestigationTeamGuard = ({ children }: { children: React.ReactNode }) => {
+  const { isInvestigationTeam } = usePermissions();
+  const location = useLocation();
+
+  if (isInvestigationTeam) {
+    const allowed = TEAM_ALLOWED_PREFIXES.some(
+      (p) => location.pathname === p || location.pathname.startsWith(p)
+    );
+    if (!allowed) return <Navigate to="/my-pending-work" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,8 +86,11 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
 
                   {/* Protected Routes */}
-                  <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                  <Route element={<ProtectedRoute><InvestigationTeamGuard><MainLayout /></InvestigationTeamGuard></ProtectedRoute>}>
                     <Route path="/" element={<Index />} />
+
+                    {/* Investigation & Enforcement team — financial-free pending work */}
+                    <Route path="/my-pending-work" element={<TeamPendingWork />} />
 
                     {/* Cases */}
                     <Route path="/all-cases" element={<CaseList />} />
