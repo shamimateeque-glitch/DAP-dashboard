@@ -2,35 +2,62 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import StatusBadge from '@/components/StatusBadge';
-import { Search, Hammer, Trash2, Calendar } from 'lucide-react';
+import { Search, Gavel, Trash2, Calendar, ArrowLeft, Loader2 } from 'lucide-react';
 import { classifyDueDate, DUE_DATE_ROW_CLASSES, fmtDate } from '@/lib/reportUtils';
 import { displayClientName } from '@/lib/clientUtils';
 
 /**
  * My Pending Work — the Investigation & Enforcement (field) team's only screen.
  *
- * View-only and financial-free. Three stage tabs (In-Depth / Enforcement / Destruction).
+ * Landing view shows three KPI cards (In-Depth / Enforcement / Destruction) with live
+ * counts; tapping a card drills into that stage's case list; tapping a case opens the
+ * (financial-free) detail. View-only and financial-free throughout.
  *
- * IMPORTANT: pending work is derived the SAME way as the dashboard's Pending Work summary
- * (by case status / stage completion), NOT by requiring a stage row in exactly IN_PROGRESS.
- * Approved cases that haven't started a stage yet still count as pending, so the counts here
- * match the summary cards. Tapping a row opens the (financial-free) case detail.
+ * Membership/counts are driven by case_status — the authoritative workflow position — so
+ * the number on each KPI card always equals the list you see when you tap it, and matches
+ * the dashboard's Pending Work summary.
  */
 
 type Stage = 'in_depth' | 'enforcement' | 'destruction';
 
-const STAGE_TABS: { value: Stage; label: string; icon: React.ElementType }[] = [
-    { value: 'in_depth', label: 'In-Depth', icon: Search },
-    { value: 'enforcement', label: 'Enforcement', icon: Hammer },
-    { value: 'destruction', label: 'Destruction', icon: Trash2 },
-];
+const STAGE_META: Record<Stage, {
+    title: string;
+    short: string;
+    description: string;
+    icon: React.ElementType;
+    gradient: string;
+}> = {
+    in_depth: {
+        title: 'Pending In-Depth Investigation',
+        short: 'In-Depth',
+        description: 'Approved cases with in-depth work pending',
+        icon: Search,
+        gradient: 'linear-gradient(135deg, #3730a3 0%, #6366f1 50%, #a5b4fc 100%)',
+    },
+    enforcement: {
+        title: 'Pending Enforcement',
+        short: 'Enforcement',
+        description: 'In-depth done, enforcement action pending',
+        icon: Gavel,
+        gradient: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 50%, #d8b4fe 100%)',
+    },
+    destruction: {
+        title: 'Pending Destruction',
+        short: 'Destruction',
+        description: 'Enforcement done, destruction of goods pending',
+        icon: Trash2,
+        gradient: 'linear-gradient(135deg, #991b1b 0%, #ef4444 50%, #fca5a5 100%)',
+    },
+};
+
+const STAGE_ORDER: Stage[] = ['in_depth', 'enforcement', 'destruction'];
 
 // ── Basic-info columns (financial-free). Placeholder set — swap field list here later. ──
 const COLUMNS: { key: string; label: string }[] = [
@@ -58,6 +85,14 @@ const plusDays = (dateStr: string | null | undefined, days: number): string | nu
     return d.toISOString().slice(0, 10);
 };
 
+// Which stage (if any) a case is currently pending — by authoritative case_status.
+const stageOf = (caseStatus: string): Stage | null => {
+    if (caseStatus === 'APPROVED' || caseStatus === 'IN_DEPTH') return 'in_depth';
+    if (caseStatus === 'ENFORCEMENT') return 'enforcement';
+    if (caseStatus === 'DESTRUCTION') return 'destruction';
+    return null;
+};
+
 interface Row {
     id: string;
     matter_code: string;
@@ -70,27 +105,21 @@ interface Row {
     due_date: string | null;
 }
 
-/** Pending predicates mirror PendingWorkReport.flattenRow so counts match the summary cards. */
 function toPendingRow(c: any, stage: Stage): Row | null {
+    if (stageOf(c.case_status) !== stage) return null;
+
     const inDepth = getFirst(c.in_depth_stages);
     const enforcement = getFirst(c.enforcement_stages);
     const destruction = getFirst(c.destruction_stages);
     const upload = getFirst(c.case_uploads);
 
-    // Membership is driven by case_status — the authoritative position in the workflow —
-    // not by embedded stage records (which may be missing, e.g. Customs cases skip In-Depth).
     let dueDate: string | null = null;
-
     if (stage === 'in_depth') {
-        if (!(c.case_status === 'APPROVED' || c.case_status === 'IN_DEPTH')) return null;
-        // Use the stored stage date; if the in-depth row doesn't exist yet, compute
-        // decision date + 7 days (the standard in-depth target).
+        // Stored stage date, or compute decision date + 7 days when the row doesn't exist yet.
         dueDate = stageDue(inDepth) ?? plusDays(upload?.decision_date, 7);
     } else if (stage === 'enforcement') {
-        if (c.case_status !== 'ENFORCEMENT') return null;
         dueDate = stageDue(enforcement);
     } else {
-        if (c.case_status !== 'DESTRUCTION') return null;
         dueDate = stageDue(destruction);
     }
 
@@ -113,16 +142,42 @@ function renderValue(row: Row, key: string): React.ReactNode {
     return (row as any)[key] ?? '-';
 }
 
+// ── KPI landing card ──────────────────────────────────────────────────────────
+function KpiCard({ stage, count, isLoading, onClick }: {
+    stage: Stage; count: number; isLoading: boolean; onClick: () => void;
+}) {
+    const meta = STAGE_META[stage];
+    const Icon = meta.icon;
+    return (
+        <button
+            onClick={onClick}
+            style={{ background: meta.gradient }}
+            className="relative overflow-hidden rounded-2xl p-6 text-left text-white shadow-lg transition-transform active:scale-[0.98] hover:-translate-y-0.5 min-h-[180px] flex flex-col items-center justify-center text-center gap-2"
+        >
+            <div className="w-12 h-12 rounded-xl bg-white/20 border border-white/25 flex items-center justify-center">
+                <Icon className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-semibold tracking-wide text-white/90">{meta.title}</p>
+            {isLoading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+            ) : (
+                <p className="text-5xl font-extrabold tracking-tight" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.15)' }}>{count}</p>
+            )}
+            <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 border border-white/20 text-white/90">
+                {meta.description}
+            </span>
+        </button>
+    );
+}
+
 const TeamPendingWork: React.FC = () => {
     const navigate = useNavigate();
-    const [stage, setStage] = useState<Stage>('in_depth');
+    const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: rawCases, isLoading } = useQuery({
         queryKey: ['team-pending-work'],
         queryFn: async () => {
-            // Mirror PendingWorkPage's proven select: request stage `status` explicitly
-            // (a `*` embed does not reliably return stage status in the post-encryption schema).
             const { data, error } = await supabase
                 .from('cases')
                 .select(`
@@ -138,10 +193,20 @@ const TeamPendingWork: React.FC = () => {
         },
     });
 
+    // Live counts per stage (same predicate as the lists → numbers always match).
+    const counts = useMemo(() => {
+        const c: Record<Stage, number> = { in_depth: 0, enforcement: 0, destruction: 0 };
+        for (const x of rawCases || []) {
+            const s = stageOf(x.case_status);
+            if (s) c[s]++;
+        }
+        return c;
+    }, [rawCases]);
+
     const rows = useMemo(() => {
-        if (!rawCases) return [];
+        if (!rawCases || !selectedStage) return [];
         let list = rawCases
-            .map((c: any) => toPendingRow(c, stage))
+            .map((c: any) => toPendingRow(c, selectedStage))
             .filter(Boolean) as Row[];
 
         const term = searchTerm.trim().toLowerCase();
@@ -153,27 +218,42 @@ const TeamPendingWork: React.FC = () => {
             );
         }
         return list;
-    }, [rawCases, stage, searchTerm]);
+    }, [rawCases, selectedStage, searchTerm]);
 
+    const openStage = (s: Stage) => { setSelectedStage(s); setSearchTerm(''); };
+
+    // ── Landing: KPI cards ──────────────────────────────────────────────────────
+    if (!selectedStage) {
+        return (
+            <div className="space-y-5">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">My Pending Work</h2>
+                    <p className="text-muted-foreground">
+                        Tap a stage to see the cases awaiting action.
+                    </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {STAGE_ORDER.map((s) => (
+                        <KpiCard key={s} stage={s} count={counts[s]} isLoading={isLoading} onClick={() => openStage(s)} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // ── Drill-down: case list for the selected stage ────────────────────────────
+    const meta = STAGE_META[selectedStage];
     return (
         <div className="space-y-4">
-            <div>
-                <h2 className="text-2xl font-bold tracking-tight">My Pending Work</h2>
-                <p className="text-muted-foreground">
-                    Cases awaiting action across In-Depth, Enforcement and Destruction.
-                </p>
+            <div className="flex items-start gap-3">
+                <Button variant="ghost" size="sm" className="mt-0.5" onClick={() => setSelectedStage(null)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">{meta.title}</h2>
+                    <p className="text-muted-foreground">{meta.description}</p>
+                </div>
             </div>
-
-            <Tabs value={stage} onValueChange={(v) => setStage(v as Stage)}>
-                <TabsList className="grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
-                    {STAGE_TABS.map(({ value, label, icon: Icon }) => (
-                        <TabsTrigger key={value} value={value} className="gap-2">
-                            <Icon className="h-4 w-4" />
-                            <span>{label}</span>
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
 
             <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
