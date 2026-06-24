@@ -73,9 +73,6 @@ const COLUMNS: { key: string; label: string }[] = [
 
 const getFirst = (rel: any) => (Array.isArray(rel) ? rel[0] : rel);
 
-// Stage due date: in_depth/enforcement use `target_date`, destruction uses `due_date`.
-const stageDue = (s: any): string | null => s?.due_date ?? s?.target_date ?? null;
-
 // Compute a fallback due date (e.g. for an approved case whose stage row doesn't exist yet).
 const plusDays = (dateStr: string | null | undefined, days: number): string | null => {
     if (!dateStr) return null;
@@ -114,20 +111,15 @@ interface Row {
 
 function toPendingRow(c: any, stage: Stage): Row | null {
     if (pendingStageOf(c) !== stage) return null;
-
-    const inDepth = getFirst(c.in_depth_stages);
-    const enforcement = getFirst(c.enforcement_stages);
-    const destruction = getFirst(c.destruction_stages);
     const upload = getFirst(c.case_uploads);
 
     let dueDate: string | null = null;
     if (stage === 'in_depth') {
-        // Stored stage date, or compute decision date + 7 days when the row doesn't exist yet.
-        dueDate = stageDue(inDepth) ?? plusDays(upload?.decision_date, 7);
+        dueDate = getFirst(c.in_depth_stages)?.due_date ?? plusDays(upload?.decision_date, 7);
     } else if (stage === 'enforcement') {
-        dueDate = stageDue(enforcement);
+        dueDate = getFirst(c.enforcement_stages)?.due_date ?? null;
     } else {
-        dueDate = stageDue(destruction);
+        dueDate = getFirst(c.destruction_stages)?.due_date ?? null;
     }
 
     return {
@@ -183,26 +175,23 @@ const TeamPendingWork: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: rawCases, isLoading } = useQuery({
-        queryKey: ['team-pending-work', 'v2'],
+        queryKey: ['team-pending-work', 'v3'],
         queryFn: async () => {
-            // Explicit stage `status` (mirrors PendingWorkPage's proven select) so the
-            // stage-completion predicate matches the dashboard's counts exactly.
             const { data, error } = await supabase
                 .from('cases')
                 .select(`
-                    id, matter_code, target_name, brand_name, city, province, case_type, case_status, created_at,
+                    id, matter_code, target_name, brand_name, city, province, case_type, case_status,
                     case_uploads(client, decision_date),
                     in_depth_stages(status, due_date),
                     enforcement_stages(status, due_date),
                     destruction_stages(status, due_date)
-                `)
-                .order('created_at', { ascending: false });
+                `);
             if (error) throw error;
             return data || [];
         },
     });
 
-    // Live counts per stage (same predicate as the lists → numbers always match).
+    // Live counts per stage (same predicate as the lists → numbers always match the dashboard).
     const counts = useMemo(() => {
         const c: Record<Stage, number> = { in_depth: 0, enforcement: 0, destruction: 0 };
         for (const x of rawCases || []) {
