@@ -108,7 +108,14 @@ const AppHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 md:px-6 gap-2">
+    <header
+      className="border-b border-border bg-card flex items-center justify-between px-4 md:px-6 gap-2"
+      style={{
+        // Sit below the device status bar (Android 15+ / iOS notch draw edge-to-edge).
+        height: "calc(4rem + env(safe-area-inset-top))",
+        paddingTop: "env(safe-area-inset-top)",
+      }}
+    >
       {/* Left: mobile menu button + page title */}
       <div className="flex items-center gap-2 min-w-0">
         {onMenuClick && (
