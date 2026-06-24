@@ -192,8 +192,8 @@ const TeamPendingWork: React.FC = () => {
                 .select(`
                     id, matter_code, target_name, brand_name, city, province, case_type, case_status, created_at,
                     case_uploads(client, decision_date),
-                    in_depth_stages(status, target_date),
-                    enforcement_stages(status, target_date),
+                    in_depth_stages(status, due_date),
+                    enforcement_stages(status, due_date),
                     destruction_stages(status, due_date)
                 `)
                 .order('created_at', { ascending: false });
