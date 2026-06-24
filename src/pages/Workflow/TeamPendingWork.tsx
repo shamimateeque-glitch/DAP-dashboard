@@ -85,11 +85,18 @@ const plusDays = (dateStr: string | null | undefined, days: number): string | nu
     return d.toISOString().slice(0, 10);
 };
 
-// Which stage (if any) a case is currently pending — by authoritative case_status.
-const stageOf = (caseStatus: string): Stage | null => {
-    if (caseStatus === 'APPROVED' || caseStatus === 'IN_DEPTH') return 'in_depth';
-    if (caseStatus === 'ENFORCEMENT') return 'enforcement';
-    if (caseStatus === 'DESTRUCTION') return 'destruction';
+// Which stage (if any) a case is currently pending. Mirrors the dashboard's Pending Work
+// summary (PendingWorkPage) EXACTLY so the counts match: it keys off stage completion, not
+// raw case_status. (Note: like the dashboard, Customs cases — which skip In-Depth — are not
+// counted under Enforcement because they never have a "done" in-depth record.)
+const pendingStageOf = (c: any): Stage | null => {
+    const inD = getFirst(c.in_depth_stages);
+    const enf = getFirst(c.enforcement_stages);
+    const des = getFirst(c.destruction_stages);
+
+    if (enf?.status === 'DONE' && (!des || des.status !== 'DONE')) return 'destruction';
+    if (inD?.status === 'DONE' && (!enf || enf.status !== 'DONE')) return 'enforcement';
+    if ((c.case_status === 'APPROVED' || c.case_status === 'IN_DEPTH') && (!inD || inD.status !== 'DONE')) return 'in_depth';
     return null;
 };
 
@@ -106,7 +113,7 @@ interface Row {
 }
 
 function toPendingRow(c: any, stage: Stage): Row | null {
-    if (stageOf(c.case_status) !== stage) return null;
+    if (pendingStageOf(c) !== stage) return null;
 
     const inDepth = getFirst(c.in_depth_stages);
     const enforcement = getFirst(c.enforcement_stages);
@@ -176,16 +183,18 @@ const TeamPendingWork: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: rawCases, isLoading } = useQuery({
-        queryKey: ['team-pending-work'],
+        queryKey: ['team-pending-work', 'v2'],
         queryFn: async () => {
+            // Explicit stage `status` (mirrors PendingWorkPage's proven select) so the
+            // stage-completion predicate matches the dashboard's counts exactly.
             const { data, error } = await supabase
                 .from('cases')
                 .select(`
                     id, matter_code, target_name, brand_name, city, province, case_type, case_status, created_at,
                     case_uploads(client, decision_date),
-                    in_depth_stages(*),
-                    enforcement_stages(*),
-                    destruction_stages(*)
+                    in_depth_stages(status, target_date),
+                    enforcement_stages(status, target_date),
+                    destruction_stages(status, due_date)
                 `)
                 .order('created_at', { ascending: false });
             if (error) throw error;
@@ -197,7 +206,7 @@ const TeamPendingWork: React.FC = () => {
     const counts = useMemo(() => {
         const c: Record<Stage, number> = { in_depth: 0, enforcement: 0, destruction: 0 };
         for (const x of rawCases || []) {
-            const s = stageOf(x.case_status);
+            const s = pendingStageOf(x);
             if (s) c[s]++;
         }
         return c;
