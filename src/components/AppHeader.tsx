@@ -333,7 +333,7 @@ const AppHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             onClick={() => {
               signOut().then(() => navigate('/login'));
             }}
-            className="text-[10px] text-red-500 hover:underline font-medium cursor-pointer ml-1"
+            className="text-sm md:text-[10px] text-red-500 hover:underline font-semibold cursor-pointer ml-1 px-2.5 py-1.5 md:px-1 md:py-0 rounded-md active:bg-red-500/10 whitespace-nowrap"
           >
             Sign Out
           </button>
