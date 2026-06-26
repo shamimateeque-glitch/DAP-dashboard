@@ -281,7 +281,7 @@ const CaseDetail = () => {
                         <div className="flex items-center gap-2">
                             <h2 className="text-xl tracking-tight">
                                 <span className="text-muted-foreground text-lg font-normal">{caseData.case_id}</span>
-                                {getRel(caseData.case_uploads) && (
+                                {!isInvestigationTeam && getRel(caseData.case_uploads) && (
                                     <span className="ml-2 text-lg font-bold text-foreground">
                                         ({normalizeClientName(getRel(caseData.case_uploads).client)})
                                     </span>
@@ -376,11 +376,11 @@ const CaseDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Tabs defaultValue="details" className="w-full">
-                        <TabsList className={`grid w-full ${isInvestigationTeam ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                        <TabsList className={`grid w-full ${isInvestigationTeam ? 'grid-cols-1' : 'grid-cols-4'}`}>
                             <TabsTrigger value="details">Details</TabsTrigger>
-                            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+                            {!isInvestigationTeam && <TabsTrigger value="workflow">Workflow</TabsTrigger>}
                             {!isInvestigationTeam && <TabsTrigger value="invoice">Invoice</TabsTrigger>}
-                            <TabsTrigger value="notes">Notes</TabsTrigger>
+                            {!isInvestigationTeam && <TabsTrigger value="notes">Notes</TabsTrigger>}
                         </TabsList>
 
                         {/* ===================== DETAILS TAB ===================== */}
@@ -417,6 +417,7 @@ const CaseDetail = () => {
                                                 className="text-xl font-bold"
                                             />
                                         </div>
+                                        {!isInvestigationTeam && (
                                         <div className="space-y-1">
                                             <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                                 <User className="h-4 w-4" /> Client
@@ -435,6 +436,7 @@ const CaseDetail = () => {
                                                 className="font-bold"
                                             />
                                         </div>
+                                        )}
 
                                         <div className="space-y-1">
                                             <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -504,6 +506,7 @@ const CaseDetail = () => {
                                                 allowAdd={false}
                                             />
                                         </div>
+                                        {!isInvestigationTeam && (
                                         <div className="space-y-1">
                                             <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                                 <Tag className="h-4 w-4" /> Matter Code
@@ -517,6 +520,7 @@ const CaseDetail = () => {
                                                 inputClassName="font-mono text-blue-600 font-bold"
                                             />
                                         </div>
+                                        )}
 
                                         <div className="space-y-1 md:col-span-2 border-t pt-4">
                                             <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -547,6 +551,7 @@ const CaseDetail = () => {
                         </TabsContent>
 
                         {/* ===================== WORKFLOW TAB ===================== */}
+                        {!isInvestigationTeam && (
                         <TabsContent value="workflow" className="mt-6">
                             <Card>
                                 <CardHeader>
@@ -1028,6 +1033,7 @@ const CaseDetail = () => {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                        )}
 
                         {/* ===================== INVOICE TAB ===================== */}
                         {!isInvestigationTeam && (
@@ -1129,6 +1135,7 @@ const CaseDetail = () => {
                         )}
 
                         {/* ===================== NOTES TAB ===================== */}
+                        {!isInvestigationTeam && (
                         <TabsContent value="notes" className="mt-6">
                             <Card>
                                 <CardHeader>
@@ -1146,11 +1153,13 @@ const CaseDetail = () => {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                        )}
                     </Tabs>
                 </div>
 
                 {/* ===================== RIGHT SIDEBAR ===================== */}
                 <div className="space-y-6">
+                    {!isInvestigationTeam && (
                     <Card>
                         <CardHeader className="pb-3 border-b border-white/5">
                             <CardTitle className="text-lg">Timeline & Deadlines</CardTitle>
@@ -1548,6 +1557,7 @@ const CaseDetail = () => {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
 
                     {/* Next Due Date Card */}
                     {(() => {

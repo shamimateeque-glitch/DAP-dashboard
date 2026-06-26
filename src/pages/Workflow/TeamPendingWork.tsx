@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import StatusBadge from '@/components/StatusBadge';
 import { Search, Gavel, Trash2, Calendar, ArrowLeft, Loader2 } from 'lucide-react';
 import { classifyDueDate, DUE_DATE_ROW_CLASSES, fmtDate } from '@/lib/reportUtils';
-import { displayClientName } from '@/lib/clientUtils';
 
 /**
  * My Pending Work — the Investigation & Enforcement (field) team's only screen.
@@ -59,12 +58,11 @@ const STAGE_META: Record<Stage, {
 
 const STAGE_ORDER: Stage[] = ['in_depth', 'enforcement', 'destruction'];
 
-// ── Basic-info columns (financial-free). Placeholder set — swap field list here later. ──
+// ── Basic-info columns (financial-free; no matter code, no client). ──
 const COLUMNS: { key: string; label: string }[] = [
-    { key: 'matter_code', label: 'Matter Code' },
     { key: 'target_name', label: 'Target Name' },
     { key: 'brand_name', label: 'Brand' },
-    { key: 'client', label: 'Client' },
+    { key: 'products_name', label: 'Product' },
     { key: 'case_type', label: 'Case Type' },
     { key: 'city', label: 'City' },
     { key: 'case_status', label: 'Case Status' },
@@ -99,10 +97,10 @@ const pendingStageOf = (c: any): Stage | null => {
 
 interface Row {
     id: string;
-    matter_code: string;
+    matter_code: string; // kept for search only (not displayed)
     target_name: string;
     brand_name: string;
-    client: string;
+    products_name: string;
     case_type: string;
     city: string;
     case_status: string;
@@ -127,7 +125,7 @@ function toPendingRow(c: any, stage: Stage): Row | null {
         matter_code: c.matter_code || '-',
         target_name: c.target_name || '-',
         brand_name: c.brand_name || '-',
-        client: upload?.client ? displayClientName(upload.client) : '-',
+        products_name: c.products_name || '-',
         case_type: c.case_type || '-',
         city: c.city || '-',
         case_status: c.case_status,
@@ -180,8 +178,8 @@ const TeamPendingWork: React.FC = () => {
             const { data, error } = await supabase
                 .from('cases')
                 .select(`
-                    id, matter_code, target_name, brand_name, city, province, case_type, case_status,
-                    case_uploads(client, decision_date),
+                    id, matter_code, target_name, brand_name, products_name, city, province, case_type, case_status,
+                    case_uploads(decision_date),
                     in_depth_stages(status, due_date),
                     enforcement_stages(status, due_date),
                     destruction_stages(status, due_date)
@@ -212,7 +210,8 @@ const TeamPendingWork: React.FC = () => {
             list = list.filter(r =>
                 r.matter_code.toLowerCase().includes(term) ||
                 r.target_name.toLowerCase().includes(term) ||
-                r.brand_name.toLowerCase().includes(term)
+                r.brand_name.toLowerCase().includes(term) ||
+                r.products_name.toLowerCase().includes(term)
             );
         }
         return list;
@@ -281,13 +280,12 @@ const TeamPendingWork: React.FC = () => {
                             className={`rounded-lg border p-4 space-y-2 cursor-pointer active:bg-accent/50 transition-colors ${DUE_DATE_ROW_CLASSES[classifyDueDate(row.due_date)] || 'bg-card'}`}
                         >
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-mono text-xs font-semibold text-blue-600">{row.matter_code}</span>
+                                <span className="font-medium text-sm">{row.target_name}</span>
                                 <StatusBadge status={row.case_status} />
                             </div>
-                            <div className="font-medium text-sm">{row.target_name}</div>
                             <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                                 <span>{row.brand_name}</span>
-                                <span>{row.client}</span>
+                                <span>{row.products_name}</span>
                                 <span>{row.case_type}</span>
                                 <span>{row.city}</span>
                             </div>
