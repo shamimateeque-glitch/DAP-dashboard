@@ -18,6 +18,11 @@ const nativeStorage = {
     removeItem: (key: string) => Preferences.remove({ key }).then(() => undefined),
 };
 
+// Supabase's default session lock uses the browser `navigator.locks` API, which misbehaves
+// inside Android/iOS WebViews and makes the session fail to load on cold start (drops the user
+// to login on every reopen). A pass-through lock avoids that; web keeps the default behaviour.
+const passthroughLock = async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn();
+
 const isNative = Capacitor.isNativePlatform();
 
 export const supabase = createClient<any>(
@@ -31,7 +36,7 @@ export const supabase = createClient<any>(
             detectSessionInUrl: !isNative,
             flowType: 'pkce',
             storageKey: 'dap-auth',
-            ...(isNative ? { storage: nativeStorage } : {}),
+            ...(isNative ? { storage: nativeStorage, lock: passthroughLock } : {}),
         },
         global: {
             headers: { 'x-application-name': 'dap-caseview' },
