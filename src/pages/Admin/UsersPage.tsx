@@ -132,10 +132,17 @@ const UsersPage = () => {
                 return <Badge className="bg-blue-500 hover:bg-blue-600">Data Entry</Badge>;
             case 'VIEW_ONLY':
                 return <Badge variant="secondary">View Only</Badge>;
+            case 'INVESTIGATION_TEAM':
+                return <Badge className="bg-amber-500 hover:bg-amber-600">Investigation Team</Badge>;
             default:
                 return <Badge variant="outline">{role}</Badge>;
         }
     };
+
+    const getRegionLabel = (u: User) =>
+        u.role === 'INVESTIGATION_TEAM' && u.assigned_province
+            ? `${u.assigned_province}${u.assigned_city ? ` · ${u.assigned_city}` : ' · All cities'}`
+            : null;
 
     return (
         <div className="space-y-6">
@@ -205,7 +212,12 @@ const UsersPage = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                {getRoleBadge(user.role)}
+                                                <div className="flex flex-col gap-1">
+                                                    {getRoleBadge(user.role)}
+                                                    {getRegionLabel(user) && (
+                                                        <span className="text-xs text-muted-foreground">{getRegionLabel(user)}</span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={user.is_active ? 'success' : 'destructive'}>

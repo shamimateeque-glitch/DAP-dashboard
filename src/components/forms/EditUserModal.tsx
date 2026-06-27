@@ -31,10 +31,16 @@ import {
 import { toast } from 'sonner';
 import { sanitizeErrorMessage } from '@/lib/security';
 import { User, UserRole } from '@/types/database';
+import { RegionFields, regionForSubmit, REGION_ALL_CITIES } from './RegionFields';
 
 const editUserSchema = z.object({
     full_name: z.string().min(2, 'Full name is required'),
-    role: z.enum(['SUPER_ADMIN', 'DATA_ENTRY', 'VIEW_ONLY']),
+    role: z.enum(['SUPER_ADMIN', 'DATA_ENTRY', 'VIEW_ONLY', 'INVESTIGATION_TEAM']),
+    assigned_province: z.string().optional(),
+    assigned_city: z.string().optional(),
+}).refine((d) => d.role !== 'INVESTIGATION_TEAM' || !!d.assigned_province, {
+    message: 'Province is required for Investigation Team members',
+    path: ['assigned_province'],
 });
 
 type EditUserFormValues = z.infer<typeof editUserSchema>;
@@ -59,14 +65,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         defaultValues: {
             full_name: user?.full_name || '',
             role: user?.role || 'VIEW_ONLY',
+            assigned_province: user?.assigned_province || '',
+            assigned_city: user?.assigned_city || REGION_ALL_CITIES,
         },
     });
+
+    const selectedRole = form.watch('role');
 
     React.useEffect(() => {
         if (user) {
             form.reset({
                 full_name: user.full_name,
                 role: user.role,
+                assigned_province: user.assigned_province || '',
+                assigned_city: user.assigned_city || REGION_ALL_CITIES,
             });
         }
     }, [user, form]);
@@ -75,11 +87,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         if (!user) return;
         setIsSubmitting(true);
         try {
+            const region = regionForSubmit(values.role, values.assigned_province, values.assigned_city);
             const { error } = await supabase
                 .from('users')
                 .update({
                     full_name: values.full_name,
                     role: values.role,
+                    assigned_province: region.province,
+                    assigned_city: region.city,
                 })
                 .eq('id', user.id);
 
@@ -135,12 +150,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                                             <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                                             <SelectItem value="DATA_ENTRY">Data Entry</SelectItem>
                                             <SelectItem value="VIEW_ONLY">View Only</SelectItem>
+                                            <SelectItem value="INVESTIGATION_TEAM">Investigation Team</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+                        {selectedRole === 'INVESTIGATION_TEAM' && <RegionFields form={form} />}
                         <DialogFooter className="pt-4">
                             <Button type="button" variant="outline" onClick={onClose}>
                                 Cancel

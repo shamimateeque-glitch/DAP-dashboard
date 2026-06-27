@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { sanitizeErrorMessage } from '@/lib/security';
 import { UserRole } from '@/types/database';
+import { RegionFields, regionForSubmit } from './RegionFields';
 
 const userSchema = z.object({
     email: z.string().email('Invalid email address'),
@@ -43,6 +44,11 @@ const userSchema = z.object({
         .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
     full_name: z.string().min(2, 'Full name is required'),
     role: z.enum(['SUPER_ADMIN', 'DATA_ENTRY', 'VIEW_ONLY', 'INVESTIGATION_TEAM']),
+    assigned_province: z.string().optional(),
+    assigned_city: z.string().optional(),
+}).refine((d) => d.role !== 'INVESTIGATION_TEAM' || !!d.assigned_province, {
+    message: 'Province is required for Investigation Team members',
+    path: ['assigned_province'],
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -68,19 +74,26 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             password: '',
             full_name: '',
             role: 'VIEW_ONLY',
+            assigned_province: '',
+            assigned_city: '',
         },
     });
+
+    const selectedRole = form.watch('role');
 
     const onSubmit = async (values: UserFormValues) => {
         setIsSubmitting(true);
         try {
             // Use the custom RPC function to create users securely
             // This avoids rate limits and ensures the user is fully set up
+            const region = regionForSubmit(values.role, values.assigned_province, values.assigned_city);
             const { data, error } = await supabase.rpc('admin_create_user', {
                 p_email: values.email,
                 p_password: values.password,
                 p_full_name: values.full_name,
-                p_role: values.role
+                p_role: values.role,
+                p_assigned_province: region.province,
+                p_assigned_city: region.city,
             });
 
             if (error) throw error;
@@ -193,6 +206,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                                 </FormItem>
                             )}
                         />
+                        {selectedRole === 'INVESTIGATION_TEAM' && <RegionFields form={form} />}
                         <DialogFooter className="pt-4">
                             <Button type="button" variant="outline" onClick={onClose}>
                                 Cancel

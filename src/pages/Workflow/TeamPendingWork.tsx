@@ -9,8 +9,9 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import StatusBadge from '@/components/StatusBadge';
-import { Search, Gavel, Trash2, Calendar, ArrowLeft, Loader2 } from 'lucide-react';
+import { Search, Gavel, Trash2, Calendar, ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import { classifyDueDate, DUE_DATE_ROW_CLASSES, fmtDate } from '@/lib/reportUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * My Pending Work — the Investigation & Enforcement (field) team's only screen.
@@ -172,10 +173,18 @@ const TeamPendingWork: React.FC = () => {
     const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Region scope — Investigation Team members only see cases in their assigned province
+    // (and city, if one is set). No province assigned → they see nothing (handled below).
+    const { appUser } = useAuth();
+    const assignedProvince = appUser?.assigned_province || null;
+    const assignedCity = appUser?.assigned_city || null;
+    const noRegion = appUser?.role === 'INVESTIGATION_TEAM' && !assignedProvince;
+
     const { data: rawCases, isLoading } = useQuery({
-        queryKey: ['team-pending-work', 'v3'],
+        queryKey: ['team-pending-work', 'v3', assignedProvince, assignedCity],
+        enabled: !noRegion,
         queryFn: async () => {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('cases')
                 .select(`
                     id, matter_code, target_name, brand_name, products_name, city, province, case_type, case_status,
@@ -184,6 +193,9 @@ const TeamPendingWork: React.FC = () => {
                     enforcement_stages(status, due_date),
                     destruction_stages(status, due_date)
                 `);
+            if (assignedProvince) query = query.eq('province', assignedProvince);
+            if (assignedCity) query = query.eq('city', assignedCity);
+            const { data, error } = await query;
             if (error) throw error;
             return data || [];
         },
@@ -219,6 +231,25 @@ const TeamPendingWork: React.FC = () => {
 
     const openStage = (s: Stage) => { setSelectedStage(s); setSearchTerm(''); };
 
+    const regionLabel = assignedProvince
+        ? `${assignedProvince}${assignedCity ? ` · ${assignedCity}` : ' · All cities'}`
+        : null;
+
+    // No region assigned → don't leak other regions' cases.
+    if (noRegion) {
+        return (
+            <div className="space-y-5">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">My Pending Work</h2>
+                </div>
+                <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+                    <MapPin className="mx-auto h-6 w-6 mb-2 opacity-60" />
+                    No region assigned to your account yet. Please contact your administrator.
+                </div>
+            </div>
+        );
+    }
+
     // ── Landing: KPI cards ──────────────────────────────────────────────────────
     if (!selectedStage) {
         return (
@@ -227,6 +258,7 @@ const TeamPendingWork: React.FC = () => {
                     <h2 className="text-2xl font-bold tracking-tight">My Pending Work</h2>
                     <p className="text-muted-foreground">
                         Tap a stage to see the cases awaiting action.
+                        {regionLabel && <span className="ml-1 inline-flex items-center gap-1 text-foreground/80"><MapPin className="h-3.5 w-3.5" />{regionLabel}</span>}
                     </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

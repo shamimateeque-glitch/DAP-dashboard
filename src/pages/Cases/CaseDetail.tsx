@@ -55,6 +55,7 @@ import UpdateWorkflowModal from '@/components/forms/UpdateWorkflowModal';
 import SubmitFinalReportModal from '@/components/forms/SubmitFinalReportModal';
 import UpdateInvoiceStatusModal from '@/components/forms/UpdateInvoiceStatusModal';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/contexts/AuthContext';
 import { sanitizeErrorMessage } from '@/lib/security';
 import { getPaymentTermDays, normalizeClientName } from '@/lib/paymentTerms';
 import { useInlineEdit } from '@/hooks/useInlineEdit';
@@ -78,6 +79,7 @@ const CaseDetail = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { can, isAdmin, isInvestigationTeam } = usePermissions();
+    const { appUser } = useAuth();
 
     const { data: caseData, isLoading, error, refetch } = useQuery({
         queryKey: ['case', id],
@@ -253,6 +255,26 @@ const CaseDetail = () => {
                 </Button>
             </div>
         );
+    }
+
+    // Region guard: an Investigation Team member may only open cases in their assigned region.
+    if (isInvestigationTeam) {
+        const province = appUser?.assigned_province || null;
+        const city = appUser?.assigned_city || null;
+        const outOfRegion = !province
+            || caseData.province !== province
+            || (!!city && caseData.city !== city);
+        if (outOfRegion) {
+            return (
+                <div className="text-center py-12 space-y-3">
+                    <h2 className="text-2xl font-bold">Case not available</h2>
+                    <p className="text-muted-foreground">This case is outside your assigned region.</p>
+                    <Button variant="link" onClick={() => navigate('/my-pending-work')}>
+                        Back to My Pending Work
+                    </Button>
+                </div>
+            );
+        }
     }
 
     const isCustoms = caseData.case_type === 'Customs' || caseData.case_type === 'Custom';

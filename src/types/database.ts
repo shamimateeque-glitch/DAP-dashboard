@@ -14,6 +14,9 @@ export interface User {
     role: UserRole;
     is_active: boolean;
     avatar_url?: string;
+    /** Investigation Team region scope — province required, city optional (whole province if null). */
+    assigned_province?: string | null;
+    assigned_city?: string | null;
     permissions: {
         cases: { view: boolean; create: boolean; edit: boolean };
         workflow: { view: boolean; edit: boolean };
