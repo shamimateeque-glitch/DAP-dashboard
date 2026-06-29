@@ -74,6 +74,24 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
+      # ── Publish the signed APK to a stable URL on Hostinger (https://caseview.dap-ip.com/app.apk) ──
+      # Reuses the same SSH secrets as the website deploy. Share that one link with the field team;
+      # every signed build replaces the file, so the link always serves the latest version.
+      - name: Stage APK as app.apk
+        if: steps.signing.outputs.present == 'true'
+        run: cp android/app/build/outputs/apk/release/app-release.apk ./app.apk
+
+      - name: Publish APK to Hostinger
+        if: steps.signing.outputs.present == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: app.apk
+          target: ${{ secrets.HOSTINGER_TARGET }}
+
       # ── Distribute the signed APK to the field team via Firebase App Distribution ──
       # Runs only once the FIREBASE_APP_ID + FIREBASE_SERVICE_ACCOUNT secrets are added.
       - name: Distribute to Firebase App Distribution
