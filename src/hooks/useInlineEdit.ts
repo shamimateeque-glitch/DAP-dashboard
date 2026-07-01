@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import {
@@ -72,6 +73,57 @@ async function regenerateCodesForCaseTypeChange(caseId: string, newCaseType: str
     }
 }
 
+// Mirror RecordDecisionModal: when the client decision is set (inline or via
+// modal), advance the case status and auto-create the next workflow stage.
+// - REJECTED  → case_status = REJECTED (workflow ends)
+// - APPROVED  → Customs: create Enforcement (+15d), status = ENFORCEMENT
+//               Market:  create In-Depth (+7d),  status = APPROVED
+//               (the stage-insert DB triggers then advance status further)
+// - WAITING   → no-op
+async function applyDecisionSideEffects(caseId: string, decision: string) {
+    if (decision === 'REJECTED') {
+        await supabase.from('cases').update({ case_status: 'REJECTED' }).eq('id', caseId);
+        return;
+    }
+    if (decision !== 'APPROVED') return;
+
+    const { data: caseRow } = await supabase
+        .from('cases')
+        .select('case_type, case_uploads(decision_date)')
+        .eq('id', caseId)
+        .maybeSingle();
+    if (!caseRow) return;
+
+    const upload = Array.isArray(caseRow.case_uploads) ? caseRow.case_uploads[0] : caseRow.case_uploads;
+
+    // Fall back to today if no decision date has been recorded yet, and persist
+    // it so the timeline + derived due dates stay consistent.
+    const decisionDateStr = upload?.decision_date || new Date().toISOString().split('T')[0];
+    if (!upload?.decision_date) {
+        await supabase.from('case_uploads').update({ decision_date: decisionDateStr }).eq('case_id', caseId);
+    }
+    const decisionDate = new Date(decisionDateStr + 'T12:00:00');
+
+    const isCustoms = caseRow.case_type === 'Customs' || caseRow.case_type === 'Custom';
+    if (isCustoms) {
+        await supabase.from('cases').update({ case_status: 'ENFORCEMENT' }).eq('id', caseId);
+        const target = new Date(decisionDate);
+        target.setDate(decisionDate.getDate() + 15);
+        await supabase.from('enforcement_stages').upsert(
+            [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }],
+            { onConflict: 'case_id' }
+        );
+    } else {
+        await supabase.from('cases').update({ case_status: 'APPROVED' }).eq('id', caseId);
+        const target = new Date(decisionDate);
+        target.setDate(decisionDate.getDate() + 7);
+        await supabase.from('in_depth_stages').upsert(
+            [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }],
+            { onConflict: 'case_id' }
+        );
+    }
+}
+
 function createSaver(
     table: string,
     idColumn: string,
@@ -141,6 +193,13 @@ export function useInlineEdit(caseId: string, refetch: () => void) {
                 .eq('case_id', caseId);
             refetch();
             invalidateInvoiceCaches();
+        }
+
+        // Setting the client decision inline must advance the case status and
+        // create the next stage, just like the Record Decision modal does.
+        if (field === 'decision_status' && typeof value === 'string') {
+            await applyDecisionSideEffects(caseId, value);
+            refetch();
         }
     };
 
