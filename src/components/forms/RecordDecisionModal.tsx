@@ -92,14 +92,24 @@ const RecordDecisionModal: React.FC<RecordDecisionModalProps> = ({
                     targetDate.setDate(decisionDate.getDate() + 15);
                     const formattedTargetDate = format(targetDate, 'yyyy-MM-dd');
 
-                    await supabase
+                    // Only create the enforcement stage if one doesn't already exist,
+                    // so re-recording a decision doesn't reset in-flight progress.
+                    const { data: existingEnforcement } = await supabase
                         .from('enforcement_stages')
-                        .upsert([{
-                            case_id: caseId,
-                            due_date: formattedTargetDate,
-                            status: 'IN_PROGRESS',
-                            updated_at: new Date().toISOString()
-                        }], { onConflict: 'case_id' });
+                        .select('id')
+                        .eq('case_id', caseId)
+                        .maybeSingle();
+
+                    if (!existingEnforcement) {
+                        await supabase
+                            .from('enforcement_stages')
+                            .insert([{
+                                case_id: caseId,
+                                due_date: formattedTargetDate,
+                                status: 'IN_PROGRESS',
+                                updated_at: new Date().toISOString()
+                            }]);
+                    }
                 } else {
                     // MARKET: Create in-depth stage (+7 days)
                     await supabase.from('cases').update({ case_status: 'APPROVED' }).eq('id', caseId);
@@ -108,14 +118,24 @@ const RecordDecisionModal: React.FC<RecordDecisionModalProps> = ({
                     targetDate.setDate(decisionDate.getDate() + 7);
                     const formattedTargetDate = format(targetDate, 'yyyy-MM-dd');
 
-                    await supabase
+                    // Only create the in-depth stage if one doesn't already exist,
+                    // so re-recording a decision doesn't reset in-flight progress.
+                    const { data: existingInDepth } = await supabase
                         .from('in_depth_stages')
-                        .upsert([{
-                            case_id: caseId,
-                            due_date: formattedTargetDate,
-                            status: 'IN_PROGRESS',
-                            updated_at: new Date().toISOString()
-                        }], { onConflict: 'case_id' });
+                        .select('id')
+                        .eq('case_id', caseId)
+                        .maybeSingle();
+
+                    if (!existingInDepth) {
+                        await supabase
+                            .from('in_depth_stages')
+                            .insert([{
+                                case_id: caseId,
+                                due_date: formattedTargetDate,
+                                status: 'IN_PROGRESS',
+                                updated_at: new Date().toISOString()
+                            }]);
+                    }
                 }
             } else if (values.decision_status === 'REJECTED') {
                 await supabase.from('cases').update({ case_status: 'REJECTED' }).eq('id', caseId);

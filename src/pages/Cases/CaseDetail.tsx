@@ -693,6 +693,9 @@ const CaseDetail = () => {
                                                     )}
                                                 </div>
                                             </div>
+                                            {can('workflow', 'edit') && getRel(caseData.case_uploads) && (
+                                                <Button variant="ghost" size="sm" onClick={() => setDecisionModalOpen(true)}>Edit</Button>
+                                            )}
                                         </div>
 
                                         {['APPROVED', 'IN_DEPTH', 'ENFORCEMENT', 'DESTRUCTION', 'CLOSED'].includes(caseData.case_status) && (

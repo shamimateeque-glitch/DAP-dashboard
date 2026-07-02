@@ -109,18 +109,28 @@ async function applyDecisionSideEffects(caseId: string, decision: string) {
         await supabase.from('cases').update({ case_status: 'ENFORCEMENT' }).eq('id', caseId);
         const target = new Date(decisionDate);
         target.setDate(decisionDate.getDate() + 15);
-        await supabase.from('enforcement_stages').upsert(
-            [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }],
-            { onConflict: 'case_id' }
-        );
+        // Only create the stage if one doesn't already exist, so re-approving
+        // doesn't reset in-flight enforcement progress.
+        const { data: existing } = await supabase
+            .from('enforcement_stages').select('id').eq('case_id', caseId).maybeSingle();
+        if (!existing) {
+            await supabase.from('enforcement_stages').insert(
+                [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }]
+            );
+        }
     } else {
         await supabase.from('cases').update({ case_status: 'APPROVED' }).eq('id', caseId);
         const target = new Date(decisionDate);
         target.setDate(decisionDate.getDate() + 7);
-        await supabase.from('in_depth_stages').upsert(
-            [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }],
-            { onConflict: 'case_id' }
-        );
+        // Only create the stage if one doesn't already exist, so re-approving
+        // doesn't reset in-flight in-depth progress.
+        const { data: existing } = await supabase
+            .from('in_depth_stages').select('id').eq('case_id', caseId).maybeSingle();
+        if (!existing) {
+            await supabase.from('in_depth_stages').insert(
+                [{ case_id: caseId, due_date: format(target, 'yyyy-MM-dd'), status: 'IN_PROGRESS', updated_at: new Date().toISOString() }]
+            );
+        }
     }
 }
 
