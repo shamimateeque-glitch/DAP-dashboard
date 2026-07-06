@@ -328,11 +328,17 @@ function flattenRow(c: any, reportType: ReportType): Record<string, any> | null 
                 indepth_due_date: inDepth?.due_date || null,
             };
 
-        case 'enforcement':
-            if (
-                !inDepth || inDepth.status !== 'DONE' ||
-                (enforcement && enforcement.status === 'DONE')
-            ) return null;
+        case 'enforcement': {
+            // A case is pending enforcement once it has reached the enforcement
+            // phase and it isn't done. Customs cases skip In-Depth, so gating on
+            // In-Depth DONE wrongly excluded them — key off the enforcement stage
+            // (which exists for both Market and Customs) instead, plus the brief
+            // window where a Market case's In-Depth is done but enforcement isn't
+            // created yet.
+            const inEnforcementPhase =
+                (enforcement && enforcement.status !== 'DONE') ||
+                (inDepth?.status === 'DONE' && !enforcement);
+            if (!inEnforcementPhase) return null;
             return {
                 ...base,
                 target_category: c.target_category || '-',
@@ -342,11 +348,12 @@ function flattenRow(c: any, reportType: ReportType): Record<string, any> | null 
                 upload_date: upload?.upload_date || null,
                 decision_status: upload?.decision_status || '-',
                 decision_date: upload?.decision_date || null,
-                indepth_status: inDepth.status || '-',
-                indepth_done_date: inDepth.status_date || null,
+                indepth_status: inDepth?.status || '-',
+                indepth_done_date: inDepth?.status_date || null,
                 enf_status: enforcement?.status || 'Pending',
                 enf_due_date: enforcement?.due_date || null,
             };
+        }
 
         case 'final-report':
             if (

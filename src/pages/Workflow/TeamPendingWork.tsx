@@ -83,15 +83,15 @@ const plusDays = (dateStr: string | null | undefined, days: number): string | nu
 
 // Which stage (if any) a case is currently pending. Mirrors the dashboard's Pending Work
 // summary (PendingWorkPage) EXACTLY so the counts match: it keys off stage completion, not
-// raw case_status. (Note: like the dashboard, Customs cases — which skip In-Depth — are not
-// counted under Enforcement because they never have a "done" in-depth record.)
+// raw case_status. Enforcement keys off the enforcement stage (present for both Market and
+// Customs) so Customs cases — which skip In-Depth — are still counted.
 const pendingStageOf = (c: any): Stage | null => {
     const inD = getFirst(c.in_depth_stages);
     const enf = getFirst(c.enforcement_stages);
     const des = getFirst(c.destruction_stages);
 
     if (enf?.status === 'DONE' && (!des || des.status !== 'DONE')) return 'destruction';
-    if (inD?.status === 'DONE' && (!enf || enf.status !== 'DONE')) return 'enforcement';
+    if ((enf && enf.status !== 'DONE') || (inD?.status === 'DONE' && !enf)) return 'enforcement';
     if ((c.case_status === 'APPROVED' || c.case_status === 'IN_DEPTH') && (!inD || inD.status !== 'DONE')) return 'in_depth';
     return null;
 };

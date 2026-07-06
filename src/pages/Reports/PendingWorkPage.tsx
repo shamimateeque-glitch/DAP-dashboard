@@ -326,10 +326,13 @@ const PendingWorkPage = () => {
                     inDepth++;
                 }
 
-                // 4. Pending Enforcement: In-depth done but enforcement not done
+                // 4. Pending Enforcement: reached the enforcement phase but not done.
+                // Customs cases skip In-Depth, so key off the enforcement stage
+                // (present for both Market and Customs) rather than In-Depth DONE,
+                // plus the brief window before a Market case's enforcement is created.
                 if (
-                    inDepthRec?.status === 'DONE' &&
-                    (!enforcementRec || enforcementRec.status !== 'DONE')
+                    (enforcementRec && enforcementRec.status !== 'DONE') ||
+                    (inDepthRec?.status === 'DONE' && !enforcementRec)
                 ) {
                     enforcement++;
                 }
