@@ -83,6 +83,13 @@ async function regenerateCodesForCaseTypeChange(caseId: string, newCaseType: str
 async function applyDecisionSideEffects(caseId: string, decision: string) {
     if (decision === 'REJECTED') {
         await supabase.from('cases').update({ case_status: 'REJECTED' }).eq('id', caseId);
+        // Rejection ends the workflow — remove any auto-created downstream stages
+        // (and the auto final report) so the case doesn't linger in the In-Depth /
+        // Enforcement / Destruction queues. Invoices are left untouched.
+        await supabase.from('destruction_stages').delete().eq('case_id', caseId);
+        await supabase.from('enforcement_stages').delete().eq('case_id', caseId);
+        await supabase.from('in_depth_stages').delete().eq('case_id', caseId);
+        await supabase.from('final_reports').delete().eq('case_id', caseId);
         return;
     }
     if (decision !== 'APPROVED') return;

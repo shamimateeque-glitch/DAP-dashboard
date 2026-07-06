@@ -139,6 +139,13 @@ const RecordDecisionModal: React.FC<RecordDecisionModalProps> = ({
                 }
             } else if (values.decision_status === 'REJECTED') {
                 await supabase.from('cases').update({ case_status: 'REJECTED' }).eq('id', caseId);
+                // Rejection ends the workflow — remove any auto-created downstream
+                // stages (and the auto final report) so the case doesn't linger in
+                // the In-Depth / Enforcement / Destruction queues. Invoices untouched.
+                await supabase.from('destruction_stages').delete().eq('case_id', caseId);
+                await supabase.from('enforcement_stages').delete().eq('case_id', caseId);
+                await supabase.from('in_depth_stages').delete().eq('case_id', caseId);
+                await supabase.from('final_reports').delete().eq('case_id', caseId);
             }
 
             toast.success(`Case ${values.decision_status.toLowerCase()} successfully`);
