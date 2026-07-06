@@ -547,7 +547,12 @@ const PendingWorkReport = ({ reportType }: { reportType: ReportType }) => {
         }
 
         if (caseTypeFilter !== 'all') {
-            rows = rows.filter(r => r.case_type === caseTypeFilter);
+            const isCustomsFilter = caseTypeFilter === 'Customs' || caseTypeFilter === 'Custom';
+            rows = rows.filter(r =>
+                isCustomsFilter
+                    ? (r.case_type === 'Customs' || r.case_type === 'Custom')
+                    : r.case_type === caseTypeFilter
+            );
         }
 
         if (provinceFilter !== 'all') {
@@ -708,7 +713,7 @@ const PendingWorkReport = ({ reportType }: { reportType: ReportType }) => {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="Custom">Custom</SelectItem>
+                        <SelectItem value="Customs">Customs</SelectItem>
                         <SelectItem value="Market">Market</SelectItem>
                     </SelectContent>
                 </Select>
