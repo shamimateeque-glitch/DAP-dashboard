@@ -9,6 +9,7 @@ interface StatusBadgeProps {
 const statusStyles: Record<CaseStatus, string> = {
     IN_HAND: 'bg-gray-500/20 text-gray-400 border-gray-500/50 hover:bg-gray-500/20',
     UPLOADED: 'bg-blue-500/20 text-blue-400 border-blue-500/50 hover:bg-blue-500/20',
+    AWAITING_DECISION: 'bg-sky-500/20 text-sky-400 border-sky-500/50 hover:bg-sky-500/20',
     APPROVED: 'bg-green-500/20 text-green-400 border-green-500/50 hover:bg-green-500/20',
     REJECTED: 'bg-red-500/20 text-red-400 border-red-500/50 hover:bg-red-500/20',
     IN_DEPTH: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50 hover:bg-indigo-500/20',
@@ -20,6 +21,7 @@ const statusStyles: Record<CaseStatus, string> = {
 const statusLabels: Record<CaseStatus, string> = {
     IN_HAND: 'In Hand',
     UPLOADED: 'Uploaded',
+    AWAITING_DECISION: 'Awaiting Decision',
     APPROVED: 'Approved',
     REJECTED: 'Rejected',
     IN_DEPTH: 'In Depth',

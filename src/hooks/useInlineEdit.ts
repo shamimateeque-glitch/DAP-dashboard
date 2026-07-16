@@ -149,12 +149,19 @@ function createSaver(
     label?: string
 ): SaveFn {
     return async (field: string, value: string | number | null) => {
-        const { error } = await supabase
+        // .select() makes the write report what it actually changed. Without it
+        // an update that matches no rows — blocked by RLS, or filtered on a
+        // stale id — returns no error and we'd claim success on a no-op.
+        const { data, error } = await supabase
             .from(table)
             .update({ [field]: value })
-            .eq(idColumn, idValue);
+            .eq(idColumn, idValue)
+            .select();
 
         if (error) throw error;
+        if (!data || data.length === 0) {
+            throw new Error(`No ${table} row was updated — the change was not saved.`);
+        }
 
         const displayName = label || field.replace(/_/g, ' ');
         toast.success(`${displayName} updated successfully`);

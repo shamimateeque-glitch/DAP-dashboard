@@ -1,9 +1,21 @@
+import type { Client } from '@/types/database';
+
 export const PAYMENT_TERMS: Record<string, number> = {
     'OneWorld': 90,
     'A.A Associates': 90,
     'SafeMark': 90,
     'DAP-IP': 90,
 };
+
+// `value` is what gets written to case_uploads.client; `label` is display only.
+// The Client type keeps the two from drifting — a display name in the value
+// slot is a compile error.
+export const CLIENT_OPTIONS: { label: string; value: Client }[] = [
+    { label: 'OneWorld', value: 'ONEWORLD' },
+    { label: 'A.A Associates', value: 'A.A ASSOCIATES' },
+    { label: 'SafeMark', value: 'SAFEMARK' },
+    { label: 'DAP-IP', value: 'DAP-IP' },
+];
 
 export const normalizeClientName = (clientName?: string): string => {
     if (!clientName) return '';

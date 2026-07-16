@@ -57,7 +57,7 @@ import UpdateInvoiceStatusModal from '@/components/forms/UpdateInvoiceStatusModa
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { sanitizeErrorMessage } from '@/lib/security';
-import { getPaymentTermDays, normalizeClientName } from '@/lib/paymentTerms';
+import { getPaymentTermDays, normalizeClientName, CLIENT_OPTIONS } from '@/lib/paymentTerms';
 import { useInlineEdit } from '@/hooks/useInlineEdit';
 import DuplicateErrorDialog from '@/components/DuplicateErrorDialog';
 import InlineEditField from '@/components/inline-edit/InlineEditField';
@@ -447,12 +447,7 @@ const CaseDetail = () => {
                                             <InlineEditSelect
                                                 value={getRel(caseData.case_uploads)?.client}
                                                 displayValue={normalizeClientName(getRel(caseData.case_uploads)?.client) || undefined}
-                                                options={[
-                                                    { label: 'OneWorld', value: 'OneWorld' },
-                                                    { label: 'A.A Associates', value: 'A.A Associates' },
-                                                    { label: 'SafeMark', value: 'SafeMark' },
-                                                    { label: 'DAP-IP', value: 'DAP-IP' },
-                                                ]}
+                                                options={CLIENT_OPTIONS}
                                                 onSave={(v) => saveUploadField('client', v)}
                                                 canEdit={can('cases', 'edit') && !!getRel(caseData.case_uploads)}
                                                 className="font-bold"
@@ -616,12 +611,7 @@ const CaseDetail = () => {
                                                             <InlineEditSelect
                                                                 value={getRel(caseData.case_uploads).client}
                                                                 displayValue={normalizeClientName(getRel(caseData.case_uploads).client)}
-                                                                options={[
-                                                                    { label: 'OneWorld', value: 'OneWorld' },
-                                                                    { label: 'A.A Associates', value: 'A.A Associates' },
-                                                                    { label: 'SafeMark', value: 'SafeMark' },
-                                                                    { label: 'DAP-IP', value: 'DAP-IP' },
-                                                                ]}
+                                                                options={CLIENT_OPTIONS}
                                                                 onSave={(v) => saveUploadField('client', v)}
                                                                 canEdit={can('workflow', 'edit')}
                                                                 className="text-sm text-muted-foreground font-medium"
